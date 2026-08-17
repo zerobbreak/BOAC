@@ -1,0 +1,237 @@
+<!--
+  ============================================================
+  CODE ATTRIBUTION - HARVARD REFERENCING METHOD
+  ============================================================
+
+  Reference 1
+  Author:        World Wide Web Consortium (W3C)
+  Year:          2014
+  Title:         HTML5 Specification - Semantic Elements
+  Link:          https://www.w3.org/TR/html5/
+  Date Accessed: 16 August 2026
+
+  Reference 2
+  Author:        Mozilla Developer Network (MDN)
+  Year:          2024
+  Title:         HTML Elements Reference
+  Link:          https://developer.mozilla.org/en-US/docs/Web/HTML/Element
+  Date Accessed: 16 August 2026
+
+  Reference 3
+  Author:        Mozilla Developer Network (MDN)
+  Year:          2024
+  Title:         meta - The Metadata Element (SEO & Viewport)
+  Link:          https://developer.mozilla.org/en-US/docs/Web/HTML/Element/meta
+  Date Accessed: 16 August 2026
+
+  Reference 4
+  Author:        Mozilla Developer Network (MDN)
+  Year:          2024
+  Title:         HTMLFormElement - Form Submission Handling
+  Link:          https://developer.mozilla.org/en-US/docs/Web/API/HTMLFormElement
+  Date Accessed: 16 August 2026
+
+  Reference 5
+  Author:        Google LLC
+  Year:          2024
+  Title:         Google Fonts - Web Font Loading
+  Link:          https://developers.google.com/fonts/docs/getting_started
+  Date Accessed: 16 August 2026
+
+  ============================================================
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BOAC — Bokwidi Old Age Centre | Home</title>
+  <meta name="description" content="Bokwidi Old Age Centre supports elderly community members in the Waterberg District, Limpopo through holistic care, nutrition, healthcare and intergenerational programmes."/>
+  <link rel="stylesheet" href="css/styles.css"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar" id="navbar">
+    <div class="container">
+      <a href="index.html" class="nav-logo">
+        <img src="assets/images/boac-logo.png" alt="BOAC Logo"/>
+        <span class="nav-logo-name">BOAC</span>
+      </a>
+      <div class="nav-links">
+        <a href="index.html" class="active">Home</a>
+        <a href="about.html">About BOAC</a>
+        <a href="programmes.html">Programmes</a>
+        <a href="youth.html">Youth Development</a>
+        <a href="media.html">Media</a>
+        <a href="get-involved.html">Get Involved</a>
+        <a href="contact.html">Contact</a>
+      </div>
+      <div class="nav-right">
+        <a href="donate.html" class="btn btn-amber">Donate</a>
+        <div class="nav-avatar">👤</div>
+      </div>
+      <button class="hamburger" id="hamburger" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <div class="mobile-nav" id="mobile-nav">
+    <a href="index.html">Home</a>
+    <a href="about.html">About BOAC</a>
+    <a href="programmes.html">Programmes</a>
+    <a href="youth.html">Youth Development</a>
+    <a href="media.html">Media</a>
+    <a href="get-involved.html">Get Involved</a>
+    <a href="contact.html">Contact</a>
+    <a href="donate.html" class="btn btn-amber">Donate</a>
+  </div>
+
+  <!-- HERO -->
+  <section class="hero-full" style="min-height:580px;">
+    <img src="assets/images/programme-youth.png" alt="BOAC community members and volunteers together" class="hero-full-img"/>
+    <div class="hero-full-overlay"></div>
+    <div class="container" style="width:100%;">
+      <div class="hero-full-content">
+        <h1>Empowering Our Elders,<br/>Fostering Our Future</h1>
+        <p>Bokwidi Old Age Centre supports elderly community members and empowers youth across Bokwidi Village and the Waterberg District, fostering dignity, health, and cross-generational connection.</p>
+        <div class="hero-actions">
+          <a href="donate.html" class="btn btn-amber btn-lg">Donate</a>
+          <a href="get-involved.html" class="btn btn-outline-white btn-lg">Volunteer</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATS BAR -->
+  <div class="stats-bar">
+    <div class="container">
+      <div class="stat-item fade-up">
+        <span class="stat-num" data-target="500">0</span>
+        <span class="stat-lbl">Households Supported</span>
+      </div>
+      <div class="stat-item fade-up delay-1">
+        <span class="stat-num" data-target="5">0</span>
+        <span class="stat-lbl">Communities Served</span>
+      </div>
+      <div class="stat-item fade-up delay-2">
+        <span class="stat-num" data-target="60">0</span>
+        <span class="stat-lbl">Age Eligibility (60+)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- OUR STORY -->
+  <section class="section" style="background:#fff;">
+    <div class="container">
+      <div class="story-grid">
+        <div class="story-img-wrap fade-up">
+          <img src="assets/images/hero-elder.png" alt="Elder community member at Bokwidi Village" class="story-img"/>
+          <div class="story-location-badge">📍 Bokwidi Village</div>
+        </div>
+        <div class="fade-up delay-1">
+          <span class="label">Our Story</span>
+          <h2>Rooted in Bokwidi Village</h2>
+          <p style="margin-bottom:14px;">
+            Founded with the belief that our elders are the keepers of our strength and wisdom, the Bokwidi Old Age Centre (BOAC) serves as a beacon of care in the Waterberg District. We provide holistic support, from daily nutrition and healthcare access to creating a vibrant social space where stories are shared and youth are mentored.
+          </p>
+          <a href="about.html" class="discover-link">Discover Our History</a>
+          <div class="community-tags" style="margin-top:28px;">
+            <span class="community-tags-label">Serving the Waterberg District:</span>
+            <span class="tag-pill">Bokwidi</span>
+            <span class="tag-pill">Maolaeng</span>
+            <span class="tag-pill">Ga-Molapo</span>
+            <span class="tag-pill">Ga-Matlapa</span>
+            <span class="tag-pill">Thulwane</span>
+            <span class="tag-pill">Ga-Selepe</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROGRAMMES -->
+  <section class="section" style="background:var(--bg);">
+    <div class="container">
+      <div class="section-header fade-up">
+        <p style="color:var(--teal);font-weight:600;font-size:0.85rem;margin-bottom:6px;">Our Programmes</p>
+        <h2>Holistic initiatives designed to empower<br/>both our elders and the youth</h2>
+        <p>fostering a thriving, intergenerational community.</p>
+      </div>
+      <div class="prog-cards">
+        <div class="prog-card fade-up">
+          <div class="prog-icon">🏡</div>
+          <h3>Elderly Support</h3>
+          <p>Daily care, companionship, and essential services for our seniors — ensuring every elder lives with dignity.</p>
+          <a href="programmes.html" class="prog-link">Learn More</a>
+        </div>
+        <div class="prog-card fade-up delay-1">
+          <div class="prog-icon">🌱</div>
+          <h3>Youth Development</h3>
+          <p>Empowering the next generation through mentorship, skills training, and bridging the gap between youth and elders.</p>
+          <a href="youth.html" class="prog-link">Learn More</a>
+        </div>
+        <div class="prog-card fade-up delay-2">
+          <div class="prog-icon">💙</div>
+          <h3>Community Wellness</h3>
+          <p>Health screenings, light exercise, and mental well-being support to keep our seniors strong and socially connected.</p>
+          <a href="programmes.html" class="prog-link">Learn More</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- JOIN OUR COMMUNITY CTA -->
+  <section class="cta-section section">
+    <div class="container" style="position:relative;z-index:1;">
+      <div class="fade-up">
+        <h2>Join Our Community</h2>
+        <p>Your support helps us continue providing essential services, dignity, and a sense of belonging to our elders in the Waterberg district.</p>
+        <div class="cta-actions">
+          <a href="donate.html" class="btn btn-amber btn-lg">Donate</a>
+          <a href="get-involved.html" class="btn btn-outline-white btn-lg">Volunteer</a>
+          <a href="get-involved.html" class="btn btn-outline-white btn-lg">Partner With Us</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <img src="assets/images/boac-logo.png" alt="BOAC Logo" class="footer-brand-img"/>
+          <p class="footer-tagline">Batšofe Tiang Maatla — The elderly guide our strength</p>
+          <div class="footer-address">📍 Bokwidi Village, Waterberg District, Limpopo</div>
+        </div>
+        <div>
+          <div class="footer-col-title">Quick Links</div>
+          <div class="footer-links">
+            <a href="get-involved.html">Volunteer</a>
+            <a href="#">Privacy Policy</a>
+            <a href="#">Annual Reports</a>
+          </div>
+        </div>
+        <div>
+          <div class="footer-col-title">Follow Us</div>
+          <div class="footer-social">
+            <a href="#" class="social-btn" aria-label="Share">🔗</a>
+            <a href="#" class="social-btn" aria-label="Community">👥</a>
+            <a href="#" class="social-btn" aria-label="Calendar">📅</a>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>© 2024 Bokwidi Old Age Centre. All rights reserved.</p>
+        <p style="display:flex;align-items:center;gap:6px;">🌍 Non-Profit Registered</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>
