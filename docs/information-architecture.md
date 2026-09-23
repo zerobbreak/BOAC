@@ -1,154 +1,225 @@
-# VEX — Information Architecture Specification (Task 1.3)
-**Author:** Bokamoso Sebake (BK — UI/UX Design Lead)  
-**Project:** VEX AI Prompt Library (PROG7314 / INSY7315 Task 2)  
-**Status:** Approved & Ready for Implementation  
+# Bokwidi Old Age Centre (BOAC) — Information Architecture Specification (Task 1.3)
+**Author:** Bokamoso Sebake (BK — ST10440322 | UI/UX Lead & System Architect)  
+**Module:** INSY7315 Information System 3E (Task 2)  
+**Client:** Bokwidi Old Age Centre (BOAC), Extension 2, Diepsloot, Gauteng  
+**Motto:** *Batšofe Tiang Maatla – The elderly guide our strength*  
 
 ---
 
-## 1. Executive Summary & Architectural Goals
+## 1. Context & Architectural Objectives
 
-The **VEX AI Prompt Library** Information Architecture (IA) establishes an authoring-first, developer-centric hierarchy for managing, parameterizing, evaluating, and sharing Large Language Model (LLM) prompts.
+The **Bokwidi Old Age Centre (BOAC)** operates in Extension 2, Diepsloot, Gauteng, providing essential welfare, nutrition, wellness, literacy, and youth mentorship to over **800 vulnerable households** across **5 community zones**. 
 
-### Core Architectural Goals:
-1. **Zero-Latency Findability**: Hierarchical and faceted categorization (Coding, Marketing, Creative, Research, System Architecture) enabling sub-second filtering across thousands of prompts.
-2. **Seamless Omnichannel Workflow**: Uniform taxonomy and mental models shared across the Android Native Client, the Responsive Web Workbench, and the Headless CMS.
-3. **Execution-Centric Structure**: Unlike static copy-paste prompt repositories, VEX embeds the testing sandbox directly into the prompt lifecycle (Draft → Inject Variables → Dual-Model Run → Log Telemetry → Share).
-4. **Governance & Role-Based Content Separation**: Clear demarcation between personal private workspaces, public community feeds, and editorial CMS-managed featured content.
+Historically constrained by manual paper registers and fragmented social media channels, BOAC requires a unified digital ecosystem connecting:
+1. A **Public Responsive Web Application** (Next.js / Tailwind CSS) designed for donors, volunteers, community members, and local youth.
+2. A **Companion Mobile App** (React Native Expo) for community discovery, events, and offline-accessible guides.
+3. A **Secured Coordinator CMS Dashboard** powered by a Node.js REST API and Supabase (PostgreSQL) for administrative content management and volunteer vetting.
+
+### Key Architectural Pillars:
+* **Elderly-First Accessibility (WCAG 2.1 AA)**: High-contrast typography (minimum 4.5:1), large legible touch targets ($\ge 44\text{px}$), clear iconography paired with descriptive text, and minimal cognitive load.
+* **Low-Bandwidth Optimization**: Lightweight page footprints ($< 3\text{s}$ load on 3G/4G networks), CDN asset compression, and direct offline-friendly layouts.
+* **POPIA Compliance by Design**: Explicit opt-in consent checkboxes, minimal data collection, secure encrypted storage, and restricted coordinator access tiers.
+* **Frictionless Giving & Volunteering**: 1-tap clipboard copying for direct banking transfers (eliminating complex gateways and PCI-DSS overhead) and a structured 4-step volunteer vetting pipeline.
 
 ---
 
-## 2. High-Level System Sitemap & Navigation Hierarchy
+## 2. Complete System Sitemap & Information Hierarchy
 
 ```mermaid
 graph TD
-    Root[VEX Platform Root] --> Public[1.0 Public Web & Discovery]
-    Root --> App[2.0 Personal Workspace / Studio]
-    Root --> Community[3.0 Community Marketplace]
-    Root --> Admin[4.0 Headless CMS & Admin Portal]
+    Root[BOAC Digital Platform] --> Public[1.0 Public Web Platform]
+    Root --> Youth[2.0 Youth Opportunity Hub]
+    Root --> Mobile[3.0 Companion Mobile App]
+    Root --> Admin[4.0 Coordinator CMS Portal]
 
-    %% 1.0 Public
-    Public --> P_Home[1.1 Landing / Feature Showcase]
-    Public --> P_Explore[1.2 Public Template Explorer]
-    Public --> P_Share[1.3 Tokenized Shared Prompt View /shared/:token]
-    Public --> P_Docs[1.4 Documentation & API Specs]
+    %% 1.0 Public Web
+    Public --> P_Home[1.1 Home / Landing Page]
+    Public --> P_About[1.2 About BOAC - History, Mission, Values]
+    Public --> P_Prog[1.3 7 Core Programmes]
+    Public --> P_Media[1.4 Media & Press Coverage]
+    Public --> P_Gallery[1.5 Community Photo Gallery]
+    Public --> P_Involve[1.6 Get Involved & Partnerships]
+    Public --> P_Vol[1.7 Volunteer Application Portal]
+    Public --> P_Donate[1.8 1-Tap Donate & Banking Details]
+    Public --> P_Contact[1.9 Contact & Location Map]
 
-    %% 2.0 Studio
-    App --> A_Library[2.1 My Library / Workbench]
-    App --> A_Editor[2.2 Prompt Studio & Variable Injector]
-    App --> A_Sandbox[2.3 Dual-Model Execution Sandbox]
-    App --> A_History[2.4 Response History & Diff Analyzer]
-    App --> A_Settings[2.5 Workspace & Model Settings]
+    %% 1.3 Programmes
+    P_Prog --> PR_Elderly[1.3.1 Elderly Support & Day Care]
+    P_Prog --> PR_Nutr[1.3.2 Cooking & Nutritional Feeding]
+    P_Prog --> PR_Farm[1.3.3 Horticulture & Farming]
+    P_Prog --> PR_Health[1.3.4 Community Wellness & Healthcare]
+    P_Prog --> PR_Lit[1.3.5 Literacy & Adult Education]
+    P_Prog --> PR_Youth[1.3.6 Youth Mentorship & Development]
+    P_Prog --> PR_Cult[1.3.7 Cultural Heritage Preservation]
 
-    %% 3.0 Community
-    Community --> C_Trending[3.1 Trending Prompts Feed]
-    Community --> C_Featured[3.2 Staff Picks & Curated Collections]
-    Community --> C_Detail[3.3 Community Prompt Detail & Fork]
-    Community --> C_Submissions[3.4 User Submissions & Upvotes]
+    %% 2.0 Youth Hub
+    Youth --> Y_Bursary[2.1 Verified Bursaries & Funding]
+    Youth --> Y_Intern[2.2 Internships & Learnerships]
+    Youth --> Y_Skills[2.3 Digital Skills & Workshops]
 
     %% 4.0 CMS Admin
-    Admin --> M_Prompts[4.1 Curated Template Management]
-    Admin --> M_Categories[4.2 Taxonomy & Tagging Manager]
-    Admin --> M_Models[4.3 Model Provider & Endpoint Registry]
-    Admin --> M_Moderation[4.4 Community Moderation Queue]
-    Admin --> M_Audit[4.5 Telemetry & Audit Logs]
+    Admin --> M_Login[4.1 Secure Admin Login - Supabase Auth]
+    Admin --> M_Dash[4.2 Overview Dashboard & Impact Stats]
+    Admin --> M_VolPipeline[4.3 Volunteer Applications Pipeline]
+    Admin --> M_Content[4.4 CMS Content Hub]
+    Admin --> M_Enquiries[4.5 Contact & Partner Inbox]
+    Admin --> M_Bank[4.6 Banking & Stats Manager]
+
+    M_Content --> MC_Prog[4.4.1 Programmes Manager]
+    M_Content --> MC_Media[4.4.2 Media & Press Manager]
+    M_Content --> MC_Gallery[4.4.3 Gallery & Storage Buckets]
+    M_Content --> MC_Events[4.4.4 Events & Announcements]
+    M_Content --> MC_Testimonial[4.4.5 Elder Testimonials]
+    M_Content --> MC_Opps[4.4.6 Youth Opportunity Editor]
 ```
 
 ---
 
-## 3. Global Navigation Matrix Across Breakpoints
+## 3. Responsive Navigation Schema Across Breakpoints
 
-| Navigation Component | Desktop (`> 1024px`) | Tablet (`768px – 1024px`) | Mobile (`< 768px`) |
+| Navigation Area | 🖥️ Desktop (`> 1024px`) | 💻 Tablet (`768px – 1024px`) | 📱 Mobile (`< 768px`) |
 | :--- | :--- | :--- | :--- |
-| **Primary Navigation** | Fixed Left Sidebar (240px) with expandable grouped sections & quick keyboard shortcuts (`Cmd+K`, `N`). | Collapsible Sidebar (Icon-rail 72px expanding to overlay on hover/tap). | Persistent Bottom Navigation Bar (4 primary tabs + Center Action Button). |
-| **Search & Quick Action** | Global Top Command Bar with instant fuzzy substring search across prompts, categories, and tags. | Header Search Icon expanding to full-width modal overlay. | Top Search Bar on Home/Explore views with filter chip drawer. |
-| **Secondary & In-Context Actions** | Sticky contextual action bar / Right Inspector Panel (Model params, variables, token counts). | Sliding Right Flyout Drawer for parameters and variable configuration. | Bottom Sheet Modals for parameter tuning and variable injection forms. |
-| **Breadcrumbs / Location** | Explicit hierarchical breadcrumb trail (`Workspace > Coding > SQL Optimizer > v2.1`). | Compact Back Button + Current Section title. | Top Bar Title with chevron back navigation. |
+| **Top Header / App Bar** | Sticky header with BOAC logo, primary menu links, emergency helpline, and prominent "Donate" CTA button. | Sticky header with logo, search icon, "Donate" button, and hamburger toggle. | Fixed header with brand logo, quick call button, and hamburger trigger. |
+| **Primary Navigation** | Horizontal top navigation bar with dropdown menus for Programmes and Media. | Slide-out side drawer with high-contrast text and grouped sections. | Full-screen overlay menu with large touch targets ($\ge 48\text{px}$) and clear icon + text labels. |
+| **Quick Action / CTA** | Prominent "Donate Now" button linking directly to verified banking details card. | Sticky "Get Involved" & "Donate" action buttons in header. | Persistent bottom action pill with "Donate (1-Tap Copy)" and "Volunteer". |
+| **Footer Navigation** | 4-column rich footer: Org Info & NPO Reg, Quick Links, 7 Programmes, Contact details, and Admin Login link. | 2-column organized footer with direct contact badges and legal disclaimers. | Compact stacked accordion footer with direct tap-to-call and WhatsApp links. |
+| **CMS Coordinator Nav** | Persistent left sidebar (240px) with active notification badges for new volunteer submissions. | Collapsible icon rail with slide-out submenus. | Off-canvas drawer accessible via top admin navbar. |
 
 ---
 
-## 4. Content Taxonomy & Classification System
+## 4. Content Taxonomy & Category Modeling
 
-VEX organizes all prompt assets into a 3-tier taxonomy coupled with multi-dimensional metadata:
+The BOAC platform organizes all content assets into three main taxonomical domains:
 
 ```mermaid
-flowchart LR
-    Domain[Tier 1: Domain Category] --> SubCategory[Tier 2: Functional Subcategory]
-    SubCategory --> Tags[Tier 3: Dimensional Tags]
+flowchart TD
+    subgraph Taxonomy[BOAC Core Taxonomies]
+        T1[1. Core Programmes Pillars]
+        T2[2. Media & News Types]
+        T3[3. Youth Opportunities]
+        T4[4. Volunteer Skill Areas]
+    end
 
-    Domain --- D1[Engineering & Code]
-    Domain --- D2[Marketing & Copywriting]
-    Domain --- D3[Product & Strategy]
-    Domain --- D4[Research & Synthesis]
-    Domain --- D5[Creative & Media]
+    T1 --> P1[Elderly Support & Day Care]
+    T1 --> P2[Nutrition & Feeding Scheme]
+    T1 --> P3[Horticulture & Organic Farming]
+    T1 --> P4[Wellness & Health Screening]
+    T1 --> P5[Adult Literacy & Education]
+    T1 --> P6[Youth Mentorship]
+    T1 --> P7[Cultural Heritage Preservation]
 
-    Tags --- T1[Target Model: gpt-4o, gemini-1.5-pro, claude-3-5-sonnet]
-    Tags --- T2[Output Type: JSON, Markdown, Code, Step-by-Step]
-    Tags --- T3[Complexity: Beginner, Intermediate, Advanced]
-    Tags --- T4[Parameter Count: 0-vars, Multi-variable]
+    T2 --> M1[Radio Broadcasts]
+    T2 --> M2[TV Appearances]
+    T2 --> M3[Community Events]
+    T2 --> M4[Press Releases & Articles]
+
+    T3 --> Y1[Higher Education Bursaries]
+    T3 --> Y2[SETA Learnerships]
+    T3 --> Y3[Graduate Internships]
+    T3 --> Y4[Vocational Workshops]
+
+    T4 --> V1[Kitchen & Meal Distribution]
+    T4 --> V2[Garden & Farming Support]
+    T4 --> V3[Elderly Care & Companionship]
+    T4 --> V4[Youth Tutoring & Computer Literacy]
+    T4 --> V5[Admin & Event Organization]
 ```
-
-### Taxonomy Rules & Constraints:
-* **Primary Category (Strict)**: Every prompt MUST belong to exactly one top-level category (`categoryId` foreign key).
-* **Tags (Loose & Multi-valued)**: Zero or more lowercase alphanumeric tags for cross-cutting concerns (e.g., `refactoring`, `typescript`, `few-shot`).
-* **System vs User Taxonomies**: System categories are provisioned via CMS and locked; users can define custom local tags within their own workspace.
 
 ---
 
-## 5. Core User Journey Flows
+## 5. End-to-End User Journey Flows
 
-### Flow 1: Create, Parameterize & Execute Prompt in Sandbox
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor User
-    participant UI as Prompt Studio UI
-    participant Injector as Smart Variable Engine
-    participant Sandbox as Dual-Model Sandbox
-    participant API as Hosted Express REST API
-    participant DB as PostgreSQL / RoomDB
-
-    User->>UI: Enters prompt body containing {domain} & {framework}
-    UI->>Injector: Scans AST for curly bracket placeholders
-    Injector-->>UI: Generates dynamic form inputs for domain and framework
-    User->>UI: Fills parameters (domain="FinTech", framework="FastAPI")
-    User->>UI: Selects Model A (GPT-4o) and Model B (Gemini 1.5 Pro)
-    User->>UI: Clicks "Run in Sandbox"
-    UI->>Sandbox: Assembles final prompt string
-    Sandbox->>API: POST /prompts/:id/run (Parallel dispatch)
-    API-->>Sandbox: Returns Model A and Model B streams + latency telemetry
-    Sandbox->>UI: Renders Synchronized Split-Screen Diff Viewer
-    UI->>DB: Persists ModelRun telemetry (status=complete, latencyMs, tokens)
-```
-
-### Flow 2: Fork Community Template to Local Workspace
+### Flow 1: Prospective Donor Journey (1-Tap Banking Copy)
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Creator as Community User
-    actor Explorer as Local Developer
-    participant CMS as Headless CMS / Community Feed
-    participant Local as Local RoomDB / Workspace
+    actor Donor as Prospective Donor
+    participant Web as BOAC Website (Next.js)
+    participant Clipboard as Device Clipboard
+    participant Bank as Donor Banking App
 
-    Creator->>CMS: Submits prompt template for public listing
-    Note over CMS: CMS Admin / Moderation reviews & publishes
-    Explorer->>CMS: Browses Trending Prompts & selects template
-    Explorer->>CMS: Clicks "Clone to Workspace" (POST /prompts/from-template/:id)
-    CMS-->>Local: Instantiates copy with new ownerId, inherits variables & tags
-    Local-->>Explorer: Opens cloned prompt in Prompt Studio ready for immediate customization
+    Donor->>Web: Clicks "Donate Now" on Hero / Navigation
+    Web-->>Donor: Renders Donate Page with Verified Bank Card & Impact Breakdown
+    Donor->>Web: Clicks "Copy Account Details" Button
+    Web->>Clipboard: Copies formatted account string (Bank, Acc No, Branch Code, Ref)
+    Web-->>Donor: Displays green visual confirmation toast ("Copied to clipboard!")
+    Donor->>Bank: Switches to banking app & pastes verified details for EFT
+```
+
+### Flow 2: POPIA-Compliant Volunteer Intake & Review Pipeline
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Applicant as Volunteer Applicant
+    participant Web as Volunteer Form UI
+    participant API as Node.js REST API
+    participant DB as Supabase PostgreSQL
+    participant Coord as Coordinator Portal
+
+    Applicant->>Web: Fills personal info, skills, area of interest, availability
+    Applicant->>Web: Checks mandatory POPIA consent checkbox
+    Applicant->>Web: Clicks "Submit Application"
+    Web->>API: POST /api/volunteers (Payload validated with Zod)
+    API->>DB: INSERT INTO volunteer_applications (status='submitted')
+    DB-->>API: Returns 201 Created + Application ID
+    API-->>Web: Confirmation screen with Application Reference Number
+    Note over Coord,DB: Real-time update in Coordinator Portal
+    Coord->>DB: Updates status to 'under_review' -> 'contacted' -> 'accepted'
+```
+
+### Flow 3: Coordinator Content Publishing Flow
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Admin as BOAC Coordinator
+    participant Portal as Coordinator CMS Portal
+    participant API as Backend REST API
+    participant Storage as Supabase Storage Bucket
+    participant DB as PostgreSQL DB
+    participant Web as Public Website
+
+    Admin->>Portal: Authenticates with email & password via Supabase Auth
+    Portal-->>Admin: Grants JWT session with role claim (ContentAdmin)
+    Admin->>Portal: Opens Gallery Manager & selects event photos
+    Portal->>Storage: Uploads image file to public 'gallery' bucket
+    Storage-->>Portal: Returns CDN public image URL
+    Admin->>Portal: Enters title, event date, category, and clicks "Publish"
+    Portal->>API: POST /api/content/gallery (JWT Bearer Token)
+    API->>DB: INSERT INTO gallery_items
+    DB-->>Portal: 201 Created
+    Portal-->>Admin: Visual success toast
+    Web->>DB: Public visitors immediately see newly published photos
 ```
 
 ---
 
-## 6. Access Control & User Roles
+## 6. Access Control & Role Matrix (RBAC)
 
-| Capability / Resource | Anonymous Guest | Authenticated User | Content Editor / Reviewer | System Admin |
-| :--- | :---: | :---: | :---: | :---: |
-| Browse Public Templates & Documentation | ✅ Read-only | ✅ Read-only | ✅ Read-only | ✅ Full Access |
-| Run Public Prompts with Temp Variables | ✅ (Rate limited) | ✅ (Full quota) | ✅ | ✅ |
-| Personal Prompt CRUD & Local RoomDB Sync | ❌ | ✅ | ✅ | ✅ |
-| Dual-Model Comparison Sandbox | ❌ | ✅ | ✅ | ✅ |
-| Submit Prompt to Community Feed | ❌ | ✅ (Pending review) | ✅ (Auto-approved) | ✅ |
-| Manage CMS Taxonomy & Featured Prompts | ❌ | ❌ | ✅ | ✅ |
-| Configure Model API Providers & Quotas | ❌ | ❌ | ❌ | ✅ |
+| Capability / Resource | Public Visitor | Volunteer Applicant | Volunteer Coordinator | Content Admin | Super Admin (Executive) |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| View Public Pages, Media, Gallery, Programmes | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Copy Banking Details / Donate Card | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Submit Volunteer Application & Consent | ❌ | ✅ | ✅ | ✅ | ✅ |
+| Submit General Contact / Partnership Enquiry | ✅ | ✅ | ✅ | ✅ | ✅ |
+| View & Filter Volunteer Intake Applications | ❌ | ❌ | ✅ | ✅ | ✅ |
+| Update Volunteer Application Status & Notes | ❌ | ❌ | ✅ | ❌ | ✅ |
+| Manage Programmes, Media, Events, Gallery | ❌ | ❌ | ❌ | ✅ | ✅ |
+| Update Audited Community Impact Statistics | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Manage Coordinator Staff Accounts & Roles | ❌ | ❌ | ❌ | ❌ | ✅ |
+
+---
+
+## 7. Accessibility & Usability Standards for BOAC Audience
+
+1. **Visual Clarity & Typography**:
+   * Minimum body text size of `16px` on mobile, `18px` on desktop with `1.6` line-height for effortless reading by seniors.
+   * High contrast colors meeting **WCAG AAA** for core headings and **WCAG AA** for interactive buttons.
+2. **Accessible Form Design**:
+   * Every form field must have a persistent `<label>` element (never relying solely on placeholder text).
+   * Generous padding ($\ge 14\text{px}$) and clear validation error messages rendered in high-contrast red (`#DC2626`).
+3. **Motor & Touch Optimization**:
+   * Minimum touch target size of $48\text{px} \times 48\text{px}$ on all mobile buttons, chips, and links.
+   * Ample spacing between interactive elements to prevent accidental clicks.
