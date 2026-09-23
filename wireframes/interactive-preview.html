@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VEX AI — Interactive Responsive Wireframes (Task 2.1)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-canvas: #09090b;
+      --bg-surface: #0f172a;
+      --bg-card: #1e293b;
+      --border: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent-orange: #f76301;
+      --accent-magenta: #c6267b;
+      --accent-violet: #620093;
+      --accent-orchid: #934a83;
+      --accent-cyan: #00f5ff;
+      --brand-gradient: linear-gradient(135deg, #f76301 0%, #c6267b 50%, #620093 100%);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: #030712;
+      color: var(--text-main);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Control Bar */
+    .control-header {
+      background: #0f172a;
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .brand-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-glyph {
+      background: var(--brand-gradient);
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Fira Code', monospace;
+      font-size: 12px;
+      font-weight: 700;
+      color: white;
+    }
+
+    .toolbar-group {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .btn-group {
+      display: flex;
+      background: #1e293b;
+      border-radius: 8px;
+      padding: 3px;
+      border: 1px solid var(--border);
+    }
+
+    .btn-tab {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-tab.active {
+      background: var(--brand-gradient);
+      color: #ffffff;
+      box-shadow: 0 2px 8px rgba(247, 99, 1, 0.3);
+    }
+
+    /* Stage Canvas */
+    .stage-wrapper {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 24px;
+      background: radial-gradient(circle at 50% 10%, #1e1b4b 0%, #030712 70%);
+      overflow-y: auto;
+    }
+
+    .viewport-frame {
+      background: var(--bg-surface);
+      border: 2px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      width: 100%;
+      max-width: 1380px;
+      min-height: 800px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .viewport-frame.mode-tablet {
+      max-width: 820px;
+    }
+
+    .viewport-frame.mode-mobile {
+      max-width: 390px;
+      border-radius: 36px;
+      border: 8px solid #334155;
+      min-height: 780px;
+    }
+
+    /* Screen UI Layouts */
+    .app-container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      min-height: 800px;
+      background: var(--bg-canvas);
+    }
+
+    .app-header {
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .search-box {
+      background: #1e293b;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 14px;
+      color: var(--text-main);
+      font-size: 0.85rem;
+      width: 320px;
+      font-family: inherit;
+    }
+
+    .mode-mobile .search-box {
+      width: 100%;
+    }
+
+    .app-body {
+      display: flex;
+      flex: 1;
+    }
+
+    /* Sidebar */
+    .app-sidebar {
+      width: 220px;
+      background: #0f172a;
+      border-right: 1px solid var(--border);
+      padding: 16px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .mode-tablet .app-sidebar {
+      width: 72px;
+      padding: 16px 8px;
+      align-items: center;
+    }
+
+    .mode-mobile .app-sidebar {
+      display: none;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      color: var(--text-muted);
+      border-radius: 8px;
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .nav-item:hover, .nav-item.active {
+      background: rgba(247, 99, 1, 0.12);
+      color: var(--text-main);
+      border-left: 3px solid var(--accent-orange);
+    }
+
+    .mode-tablet .nav-item span.label {
+      display: none;
+    }
+
+    /* Main Content Area */
+    .app-main {
+      flex: 1;
+      padding: 24px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .mode-mobile .app-main {
+      padding: 16px;
+      padding-bottom: 72px;
+    }
+
+    /* Bottom Nav for Mobile */
+    .mobile-bottom-nav {
+      display: none;
+      position: sticky;
+      bottom: 0;
+      background: var(--bg-surface);
+      border-top: 1px solid var(--border);
+      padding: 10px 16px;
+      justify-content: space-around;
+      align-items: center;
+    }
+
+    .mode-mobile .mobile-bottom-nav {
+      display: flex;
+    }
+
+    .bnav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+
+    .bnav-item.active {
+      color: var(--accent-orange);
+    }
+
+    /* Cards & Grids */
+    .chips-row {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    .chip {
+      background: #1e293b;
+      border: 1px solid var(--border);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .chip.active {
+      background: var(--brand-gradient);
+      color: white;
+      border-color: transparent;
+    }
+
+    .grid-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 16px;
+    }
+
+    .mode-mobile .grid-cards {
+      grid-template-columns: 1fr;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+
+    .card:hover {
+      border-color: var(--accent-orchid);
+      transform: translateY(-2px);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .card-title {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .card-body {
+      font-family: 'Fira Code', monospace;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      background: #09090b;
+      padding: 10px;
+      border-radius: 6px;
+      line-height: 1.4;
+    }
+
+    .card-var {
+      color: var(--accent-orange);
+      font-weight: 600;
+    }
+
+    .card-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .badge-metric {
+      background: rgba(0, 245, 255, 0.1);
+      color: var(--accent-cyan);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    /* Sandbox / Split diff styling */
+    .sandbox-split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      flex: 1;
+    }
+
+    .mode-mobile .sandbox-split {
+      grid-template-columns: 1fr;
+    }
+
+    .model-pane {
+      background: #0f172a;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .model-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 10px;
+    }
+
+    .btn-action {
+      background: var(--brand-gradient);
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Controller Bar -->
+  <header class="control-header">
+    <div class="brand-title">
+      <div class="brand-glyph">&gt;_</div>
+      <span>VEX UI/UX Wireframe System (Task 2.1)</span>
+    </div>
+
+    <!-- Screen Switcher -->
+    <div class="toolbar-group">
+      <span style="font-size: 0.8rem; color: var(--text-muted)">Screen:</span>
+      <div class="btn-group">
+        <button class="btn-tab active" onclick="switchScreen('library')">Library (Home)</button>
+        <button class="btn-tab" onclick="switchScreen('studio')">Prompt Studio</button>
+        <button class="btn-tab" onclick="switchScreen('sandbox')">Dual-Model Sandbox</button>
+        <button class="btn-tab" onclick="switchScreen('community')">Community Hub</button>
+        <button class="btn-tab" onclick="switchScreen('cms')">CMS Admin</button>
+      </div>
+    </div>
+
+    <!-- Viewport Breakpoint Switcher -->
+    <div class="toolbar-group">
+      <span style="font-size: 0.8rem; color: var(--text-muted)">Breakpoint:</span>
+      <div class="btn-group">
+        <button class="btn-tab active" id="bp-desktop" onclick="setBreakpoint('desktop')">Desktop (1440px)</button>
+        <button class="btn-tab" id="bp-tablet" onclick="setBreakpoint('tablet')">Tablet (820px)</button>
+        <button class="btn-tab" id="bp-mobile" onclick="setBreakpoint('mobile')">Mobile (390px)</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Stage Area -->
+  <main class="stage-wrapper">
+    <div class="viewport-frame" id="viewport">
+      <div class="app-container">
+        
+        <!-- App Top Header -->
+        <div class="app-header">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div class="brand-glyph">&gt;_</div>
+            <strong style="font-size: 1.1rem; letter-spacing: -0.5px;">VEX AI</strong>
+          </div>
+          <input type="text" class="search-box" placeholder="Search prompts, variables, tags (Cmd+K)..." />
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span class="badge-metric" style="font-size: 0.75rem;">● Online Sync</span>
+            <div style="width: 32px; height: 32px; border-radius: 50%; background: #334155; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700;">BK</div>
+          </div>
+        </div>
+
+        <div class="app-body">
+          <!-- Sidebar Nav (Desktop & Tablet) -->
+          <nav class="app-sidebar">
+            <div class="nav-item active" onclick="switchScreen('library')">
+              <span>📁</span>
+              <span class="label">Prompt Library</span>
+            </div>
+            <div class="nav-item" onclick="switchScreen('studio')">
+              <span>✏️</span>
+              <span class="label">Prompt Studio</span>
+            </div>
+            <div class="nav-item" onclick="switchScreen('sandbox')">
+              <span>⚡</span>
+              <span class="label">Model Sandbox</span>
+            </div>
+            <div class="nav-item" onclick="switchScreen('community')">
+              <span>🌐</span>
+              <span class="label">Community Hub</span>
+            </div>
+            <div class="nav-item" onclick="switchScreen('cms')">
+              <span>🛡️</span>
+              <span class="label">CMS Admin</span>
+            </div>
+          </nav>
+
+          <!-- Main Viewport Target -->
+          <div class="app-main" id="screen-container">
+            <!-- Dynamic Content Injected Here -->
+          </div>
+        </div>
+
+        <!-- Mobile Bottom Nav -->
+        <nav class="mobile-bottom-nav">
+          <div class="bnav-item active" onclick="switchScreen('library')">
+            <span>📁</span>
+            <span>Library</span>
+          </div>
+          <div class="bnav-item" onclick="switchScreen('studio')">
+            <span>✏️</span>
+            <span>Studio</span>
+          </div>
+          <div class="bnav-item" onclick="switchScreen('sandbox')">
+            <span>⚡</span>
+            <span>Sandbox</span>
+          </div>
+          <div class="bnav-item" onclick="switchScreen('community')">
+            <span>🌐</span>
+            <span>Community</span>
+          </div>
+          <div class="bnav-item" onclick="switchScreen('cms')">
+            <span>⚙️</span>
+            <span>Settings</span>
+          </div>
+        </nav>
+
+      </div>
+    </div>
+  </main>
+
+  <script>
+    let currentScreen = 'library';
+    let currentBreakpoint = 'desktop';
+
+    const screens = {
+      library: `
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <h2 style="font-size: 1.4rem; font-weight: 700;">Personal Prompt Library</h2>
+            <p style="color: var(--text-muted); font-size: 0.85rem;">Manage parameterized prompts and revision histories.</p>
+          </div>
+          <button class="btn-action" onclick="switchScreen('studio')">+ New Prompt</button>
+        </div>
+
+        <div class="chips-row">
+          <div class="chip active">All Prompts (24)</div>
+          <div class="chip">Engineering & Code (12)</div>
+          <div class="chip">Marketing & Copy (6)</div>
+          <div class="chip">Cybersecurity (4)</div>
+          <div class="chip">System Prompts (2)</div>
+        </div>
+
+        <div class="grid-cards">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">SEO Optimized Blog Post</span>
+              <span style="color: var(--text-muted); cursor: pointer;">⋮</span>
+            </div>
+            <div class="card-body">
+              "Act as an expert copywriter. Write a 1500-word blog post targeting <span class="card-var">{KEYWORD}</span>. Include H2, H3 tags and a compelling CTA for <span class="card-var">{AUDIENCE}</span>."
+            </div>
+            <div class="card-meta">
+              <span>🏷️ #marketing #seo</span>
+              <span class="badge-metric">⚡ 420ms | 98%</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">React Clean Refactoring</span>
+              <span style="color: var(--text-muted); cursor: pointer;">⋮</span>
+            </div>
+            <div class="card-body">
+              "Analyze the following React functional component: <span class="card-var">{CODE_BLOCK}</span>. Refactor to use modern hooks and eliminate redundant re-renders."
+            </div>
+            <div class="card-meta">
+              <span>🏷️ #react #typescript</span>
+              <span class="badge-metric">⚡ 310ms | 96%</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">PostgreSQL Index Advisor</span>
+              <span style="color: var(--text-muted); cursor: pointer;">⋮</span>
+            </div>
+            <div class="card-body">
+              "Given the table schema <span class="card-var">{SCHEMA}</span> and slow query log <span class="card-var">{QUERY}</span>, propose optimal B-Tree or GiST indexes."
+            </div>
+            <div class="card-meta">
+              <span>🏷️ #database #sql</span>
+              <span class="badge-metric">⚡ 180ms | 99%</span>
+            </div>
+          </div>
+        </div>
+      `,
+
+      studio: `
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <h2 style="font-size: 1.4rem; font-weight: 700;">Prompt Studio & Parameter Engine</h2>
+            <p style="color: var(--text-muted); font-size: 0.85rem;">Live AST placeholder detection and dynamic injection forms.</p>
+          </div>
+          <button class="btn-action" onclick="switchScreen('sandbox')">🚀 Test in Sandbox</button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 16px;">
+          <div class="card" style="display: flex; flex-direction: column; gap: 12px;">
+            <label style="font-size: 0.85rem; font-weight: 600;">Prompt Title</label>
+            <input type="text" class="search-box" style="width: 100%;" value="Full-Stack API Endpoint Generator" />
+            
+            <label style="font-size: 0.85rem; font-weight: 600;">Prompt Body (Placeholders in curly brackets)</label>
+            <textarea style="background: #09090b; border: 1px solid var(--border); color: #f8fafc; font-family: 'Fira Code', monospace; font-size: 0.85rem; padding: 12px; border-radius: 8px; min-height: 240px; resize: vertical;">
+You are a senior backend architect.
+Create an Express.js router for entity "{entity_name}" with PostgreSQL connection.
+
+Requirements:
+- Database table: {table_name}
+- Authentication middleware: {auth_type}
+- Include input validation and error handling.
+            </textarea>
+          </div>
+
+          <div class="card" style="display: flex; flex-direction: column; gap: 14px;">
+            <h3 style="font-size: 1rem; font-weight: 700; border-bottom: 1px solid var(--border); padding-bottom: 8px;">Detected Variables</h3>
+            <div>
+              <label style="font-size: 0.75rem; color: var(--accent-orange); font-family: 'Fira Code'; font-weight: 600;">{entity_name}</label>
+              <input type="text" class="search-box" style="width: 100%; margin-top: 4px;" value="PromptTemplate" />
+            </div>
+            <div>
+              <label style="font-size: 0.75rem; color: var(--accent-orange); font-family: 'Fira Code'; font-weight: 600;">{table_name}</label>
+              <input type="text" class="search-box" style="width: 100%; margin-top: 4px;" value="prompt_templates" />
+            </div>
+            <div>
+              <label style="font-size: 0.75rem; color: var(--accent-orange); font-family: 'Fira Code'; font-weight: 600;">{auth_type}</label>
+              <input type="text" class="search-box" style="width: 100%; margin-top: 4px;" value="Firebase JWT Bearer" />
+            </div>
+          </div>
+        </div>
+      `,
+
+      sandbox: `
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <h2 style="font-size: 1.4rem; font-weight: 700;">Dual-Model Execution Sandbox</h2>
+            <p style="color: var(--text-muted); font-size: 0.85rem;">Side-by-side synchronized comparison between backend LLMs.</p>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn-tab active">Synchronized Diff</button>
+            <button class="btn-action">⚡ Re-run Benchmark</button>
+          </div>
+        </div>
+
+        <div class="sandbox-split">
+          <div class="model-pane">
+            <div class="model-header">
+              <strong>Model A: GPT-4o Omni</strong>
+              <span class="badge-metric">⏱ 412ms | 98.4%</span>
+            </div>
+            <div class="card-body" style="min-height: 280px;">
+              <span style="color: #38bdf8;">// Express.js Route for PromptTemplate</span><br/>
+              const router = express.Router();<br/>
+              router.post('/prompt-templates', verifyFirebaseJWT, async (req, res) => {<br/>
+              &nbsp;&nbsp;const { title, templateBody } = req.body;<br/>
+              &nbsp;&nbsp;const result = await db.query('INSERT INTO prompt_templates...');<br/>
+              &nbsp;&nbsp;res.status(201).json(result.rows[0]);<br/>
+              });
+            </div>
+          </div>
+
+          <div class="model-pane">
+            <div class="model-header">
+              <strong>Model B: Gemini 1.5 Pro</strong>
+              <span class="badge-metric" style="color: #a855f7; background: rgba(168, 85, 247, 0.1);">⏱ 280ms | 95.8%</span>
+            </div>
+            <div class="card-body" style="min-height: 280px;">
+              <span style="color: #a855f7;">// Gemini Generated Controller</span><br/>
+              export const createTemplate = async (req: Request, res: Response) => {<br/>
+              &nbsp;&nbsp;const validated = validateTemplateSchema(req.body);<br/>
+              &nbsp;&nbsp;const template = await pgPool.insert(validated);<br/>
+              &nbsp;&nbsp;return res.status(201).send(template);<br/>
+              };
+            </div>
+          </div>
+        </div>
+      `,
+
+      community: `
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <h2 style="font-size: 1.4rem; font-weight: 700;">Community Marketplace & Discovery</h2>
+            <p style="color: var(--text-muted); font-size: 0.85rem;">Browse public prompts, upvote, and 1-click clone into workspace.</p>
+          </div>
+          <button class="btn-action">+ Submit Prompt</button>
+        </div>
+
+        <div class="chips-row">
+          <div class="chip active">🔥 Trending (Top 50)</div>
+          <div class="chip">✨ Staff Picks</div>
+          <div class="chip">💡 New Arrivals</div>
+        </div>
+
+        <div class="grid-cards">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Full-Stack Next.js 15 Architect</span>
+              <span style="color: var(--accent-orange); font-weight: 700;">▲ 1,840</span>
+            </div>
+            <div class="card-body">
+              "Constructs server components, API route handlers, and Prisma ORM schemas with zero boilerplate."
+            </div>
+            <div class="card-meta">
+              <span>By: @neon_coder</span>
+              <button class="btn-tab active" style="padding: 4px 10px;">🚀 Clone to Lib</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Midjourney Photoreal Portrait Prompt</span>
+              <span style="color: var(--accent-orange); font-weight: 700;">▲ 1,220</span>
+            </div>
+            <div class="card-body">
+              "Cinematic 85mm lens portrait, bioluminescent backlighting, octane render, 8k resolution."
+            </div>
+            <div class="card-meta">
+              <span>By: @visual_synth</span>
+              <button class="btn-tab active" style="padding: 4px 10px;">🚀 Clone to Lib</button>
+            </div>
+          </div>
+        </div>
+      `,
+
+      cms: `
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <h2 style="font-size: 1.4rem; font-weight: 700;">Headless CMS & Moderation Portal</h2>
+            <p style="color: var(--text-muted); font-size: 0.85rem;">Curate templates, configure LLM endpoints, and audit platform telemetry.</p>
+          </div>
+          <span class="badge-metric" style="color: #22c55e; background: rgba(34, 197, 94, 0.1);">Role: CMS Administrator</span>
+        </div>
+
+        <div class="card">
+          <h3 style="font-size: 1rem; font-weight: 700; border-bottom: 1px solid var(--border); padding-bottom: 8px;">Community Moderation Queue (2 Pending)</h3>
+          <div style="margin-top: 12px; display: flex; justify-content: space-between; align-items: center; background: #09090b; padding: 12px; border-radius: 8px;">
+            <div>
+              <strong>"Cybersecurity CVE Exploit Analyzer"</strong> by @sec_researcher<br/>
+              <span style="font-size: 0.75rem; color: var(--text-muted);">Model: Claude 3.5 Sonnet | Category: Engineering</span>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn-tab active" style="background: #22c55e;">Approve</button>
+              <button class="btn-tab" style="background: #ef4444; color: white;">Reject</button>
+            </div>
+          </div>
+        </div>
+      `
+    };
+
+    function renderScreen() {
+      document.getElementById('screen-container').innerHTML = screens[currentScreen];
+    }
+
+    function switchScreen(screenKey) {
+      currentScreen = screenKey;
+      renderScreen();
+      // update top bar tabs
+      document.querySelectorAll('.control-header .btn-group:first-of-type .btn-tab').forEach((btn, idx) => {
+        const keys = ['library', 'studio', 'sandbox', 'community', 'cms'];
+        btn.classList.toggle('active', keys[idx] === screenKey);
+      });
+      // update sidebar
+      document.querySelectorAll('.app-sidebar .nav-item').forEach((item, idx) => {
+        const keys = ['library', 'studio', 'sandbox', 'community', 'cms'];
+        item.classList.toggle('active', keys[idx] === screenKey);
+      });
+      // update mobile nav
+      document.querySelectorAll('.mobile-bottom-nav .bnav-item').forEach((item, idx) => {
+        const keys = ['library', 'studio', 'sandbox', 'community', 'cms'];
+        item.classList.toggle('active', keys[idx] === screenKey);
+      });
+    }
+
+    function setBreakpoint(mode) {
+      currentBreakpoint = mode;
+      const vp = document.getElementById('viewport');
+      vp.className = 'viewport-frame mode-' + mode;
+      document.getElementById('bp-desktop').classList.toggle('active', mode === 'desktop');
+      document.getElementById('bp-tablet').classList.toggle('active', mode === 'tablet');
+      document.getElementById('bp-mobile').classList.toggle('active', mode === 'mobile');
+    }
+
+    // Initialize
+    renderScreen();
+  </script>
+</body>
+</html>
