@@ -6,6 +6,7 @@ export const permissions = [
   'manage_opportunities',
   'review_applications',
   'manage_users',
+  'track_work',
 ] as const
 
 export type Permission = (typeof permissions)[number]
@@ -85,6 +86,18 @@ export const validators = {
       updatedAt: { bsonType: 'date' },
     },
   ),
+  volunteer_work: collectionSchema(
+    ['volunteerId', 'title', 'status', 'createdAt', 'updatedAt'],
+    {
+      volunteerId: objectId,
+      title: { bsonType: 'string', minLength: 1 },
+      status: { enum: ['planned', 'in_progress', 'done'] },
+      notes: { bsonType: 'string' },
+      opportunityId: objectId,
+      createdAt: { bsonType: 'date' },
+      updatedAt: { bsonType: 'date' },
+    },
+  ),
   volunteer_applications: collectionSchema(
     ['opportunityId', 'fullName', 'email', 'status', 'submittedAt'],
     {
@@ -102,7 +115,7 @@ export const validators = {
 
 export type CollectionName = keyof typeof validators
 
-const indexes: Record<CollectionName, Array<{ key: Record<string, 1>; unique?: boolean }>> = {
+const indexes: Record<CollectionName, Array<{ key: Record<string, 1 | -1>; unique?: boolean }>> = {
   roles: [{ key: { name: 1 }, unique: true }],
   users: [{ key: { email: 1 }, unique: true }],
   categories: [{ key: { name: 1 }, unique: true }],
@@ -118,12 +131,14 @@ const indexes: Record<CollectionName, Array<{ key: Record<string, 1>; unique?: b
     { key: { opportunityId: 1 } },
     { key: { status: 1 } },
   ],
+  volunteer_work: [{ key: { volunteerId: 1, updatedAt: -1 } }],
 }
 
 const seedRoles: Array<{ name: string; permissions: Permission[] }> = [
   { name: 'admin', permissions: [...permissions] },
   { name: 'editor', permissions: ['manage_content', 'publish_content'] },
   { name: 'reviewer', permissions: ['manage_opportunities', 'review_applications'] },
+  { name: 'volunteer', permissions: ['track_work'] },
 ]
 
 async function ensureCollection(db: Db, name: CollectionName): Promise<void> {
@@ -159,7 +174,7 @@ export async function ensureSchema(db: Db): Promise<void> {
   for (const role of seedRoles) {
     await db.collection('roles').updateOne(
       { name: role.name },
-      { $setOnInsert: { name: role.name, permissions: role.permissions } },
+      { $set: { permissions: role.permissions }, $setOnInsert: { name: role.name } },
       { upsert: true },
     )
   }

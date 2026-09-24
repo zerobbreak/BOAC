@@ -35,22 +35,28 @@ export type AppEnv = {
   }
 }
 
-function isAdmin(role: unknown): boolean {
-  if (role === 'admin') return true
-  if (Array.isArray(role)) return role.includes('admin')
-  if (typeof role === 'string') return role.split(',').map((part) => part.trim()).includes('admin')
+function hasRole(role: unknown, expected: string): boolean {
+  if (role === expected) return true
+  if (Array.isArray(role)) return role.includes(expected)
+  if (typeof role === 'string') {
+    return role.split(',').map((part) => part.trim()).includes(expected)
+  }
   return false
 }
 
-export const requireAdmin = createMiddleware<AppEnv>(async (c, next) => {
-  const session = await auth.api.getSession({ headers: c.req.raw.headers })
-  if (!session || !isAdmin(session.user.role)) {
-    return c.json({ error: 'Unauthorized' }, 401)
-  }
-  c.set('user', session.user)
-  c.set('session', session.session)
-  await next()
-})
+function requireRole(expected: 'admin' | 'volunteer') {
+  return createMiddleware<AppEnv>(async (c, next) => {
+    const session = await auth.api.getSession({ headers: c.req.raw.headers })
+    if (!session) return c.json({ error: 'Unauthorized' }, 401)
+    if (!hasRole(session.user.role, expected)) return c.json({ error: 'Forbidden' }, 403)
+    c.set('user', session.user)
+    c.set('session', session.session)
+    await next()
+  })
+}
+
+export const requireAdmin = requireRole('admin')
+export const requireVolunteer = requireRole('volunteer')
 
 export async function ensureAdminUser(): Promise<void> {
   const email = process.env.ADMIN_EMAIL?.trim().toLowerCase()
@@ -91,4 +97,45 @@ export async function ensureAdminUser(): Promise<void> {
     password: await ctx.password.hash(password),
   })
   console.log(`Admin user created: ${email}`)
+}
+
+export async function ensureVolunteerUser(): Promise<void> {
+  const email = process.env.VOLUNTEER_EMAIL?.trim().toLowerCase()
+  const password = process.env.VOLUNTEER_PASSWORD
+  if (!email || !password) {
+    console.log('VOLUNTEER_EMAIL and VOLUNTEER_PASSWORD are unset; volunteer user was not created')
+    return
+  }
+  if (password.length < 8) {
+    throw new Error('VOLUNTEER_PASSWORD must be at least 8 characters')
+  }
+
+  const ctx = await auth.$context
+  const existing = await ctx.adapter.findOne({
+    model: 'user',
+    where: [{ field: 'email', value: email }],
+  })
+  if (existing) {
+    console.log(`Volunteer user already exists: ${email}`)
+    return
+  }
+
+  const created = await ctx.internalAdapter.createUser(
+    {
+      email,
+      name: 'Volunteer',
+      role: 'volunteer',
+      emailVerified: true,
+    },
+    { method: 'email-password' },
+  )
+  if (!created) throw new Error('Failed to create volunteer user')
+
+  await ctx.internalAdapter.linkAccount({
+    userId: created.id,
+    providerId: 'credential',
+    accountId: created.id,
+    password: await ctx.password.hash(password),
+  })
+  console.log(`Volunteer user created: ${email}`)
 }

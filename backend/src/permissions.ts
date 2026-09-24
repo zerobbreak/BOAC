@@ -10,6 +10,7 @@ const statement = {
     'review_applications',
     'manage_users',
   ],
+  work: ['track'],
 } as const
 
 export const ac = createAccessControl(statement)
@@ -31,4 +32,8 @@ export const user = ac.newRole({
   staff: [],
 })
 
-export const roles = { admin, editor, reviewer, user }
+export const volunteer = ac.newRole({
+  work: ['track'],
+})
+
+export const roles = { admin, editor, reviewer, user, volunteer }

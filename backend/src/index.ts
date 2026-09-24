@@ -2,9 +2,10 @@ import 'dotenv/config'
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
-import { auth, ensureAdminUser, frontendOrigin, requireAdmin, type AppEnv } from './auth.js'
+import { auth, ensureAdminUser, ensureVolunteerUser, frontendOrigin, requireAdmin, type AppEnv } from './auth.js'
 import { pingBucket } from './bucket.js'
 import { closeDatabase, pingDatabase } from './db.js'
+import volunteer from './volunteer-work.js'
 
 const app = new Hono<AppEnv>()
 
@@ -28,6 +29,7 @@ const admin = new Hono<AppEnv>()
 admin.use('*', requireAdmin)
 admin.get('/', (c) => c.json({ ok: true, user: c.get('user') }))
 app.route('/admin', admin)
+app.route('/volunteer', volunteer)
 
 app.get('/health', async (c) => {
   const checks = await Promise.allSettled([pingDatabase(), pingBucket()])
@@ -43,8 +45,8 @@ const server = serve({
   port,
 }, (info) => {
   console.log(`Server is running on http://localhost:${info.port}`)
-  ensureAdminUser().catch((error: unknown) => {
-    console.error('Admin user setup failed', error)
+  Promise.all([ensureAdminUser(), ensureVolunteerUser()]).catch((error: unknown) => {
+    console.error('User setup failed', error)
   })
 })
 
