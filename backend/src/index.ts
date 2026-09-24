@@ -17,9 +17,11 @@ app.get('/health', async (c) => {
   return c.json({ database, bucket }, database && bucket ? 200 : 503)
 })
 
+const port = Number(process.env.PORT) || 3000
+
 const server = serve({
   fetch: app.fetch,
-  port: 3000
+  port,
 }, (info) => {
   console.log(`Server is running on http://localhost:${info.port}`)
 })
