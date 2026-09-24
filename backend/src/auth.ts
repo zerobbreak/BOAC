@@ -73,12 +73,15 @@ export async function ensureAdminUser(): Promise<void> {
     return
   }
 
-  const created = await ctx.internalAdapter.createUser({
-    email,
-    name: 'Admin',
-    role: 'admin',
-    emailVerified: true,
-  })
+  const created = await ctx.internalAdapter.createUser(
+    {
+      email,
+      name: 'Admin',
+      role: 'admin',
+      emailVerified: true,
+    },
+    { method: 'email-password' },
+  )
   if (!created) throw new Error('Failed to create admin user')
 
   await ctx.internalAdapter.linkAccount({
