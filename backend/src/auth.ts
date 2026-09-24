@@ -1,124 +1,58 @@
+import { betterAuth } from 'better-auth'
+import { mongodbAdapter } from '@better-auth/mongo-adapter'
+import { admin as adminPlugin } from 'better-auth/plugins'
 import { createMiddleware } from 'hono/factory'
-import { deleteCookie, getCookie, setCookie } from 'hono/cookie'
-import { sign, verify } from 'hono/jwt'
-import { ObjectId, type Db } from 'mongodb'
-import { getDb } from './db.js'
-import { hashPassword, verifyPassword } from './passwords.js'
-import type { Permission } from './schema.js'
+import { getClient, getDb } from './db.js'
+import { ac, roles } from './permissions.js'
 
-const SESSION_SECONDS = 60 * 60 * 12
-const COOKIE = 'session'
+export const frontendOrigin = process.env.FRONTEND_ORIGIN ?? 'http://localhost:5173'
 
-export type AuthUser = {
-  id: string
-  email: string
-  role: string
-  permissions: Permission[]
-}
+export const auth = betterAuth({
+  secret: process.env.BETTER_AUTH_SECRET ?? process.env.JWT_SECRET,
+  baseURL: process.env.BETTER_AUTH_URL ?? `http://localhost:${process.env.PORT ?? 3000}`,
+  trustedOrigins: [frontendOrigin],
+  database: mongodbAdapter(getDb(), { client: getClient() }),
+  emailAndPassword: {
+    enabled: true,
+    disableSignUp: true,
+  },
+  plugins: [
+    adminPlugin({
+      ac,
+      roles,
+      defaultRole: 'user',
+      adminRoles: ['admin'],
+    }),
+  ],
+})
+
+type Session = typeof auth.$Infer.Session
 
 export type AppEnv = {
   Variables: {
-    user: AuthUser
+    user: Session['user']
+    session: Session['session']
   }
 }
 
-type UserDoc = {
-  _id: ObjectId
-  email: string
-  passHash: string
-  roleId: ObjectId
+function isAdmin(role: unknown): boolean {
+  if (role === 'admin') return true
+  if (Array.isArray(role)) return role.includes('admin')
+  if (typeof role === 'string') return role.split(',').map((part) => part.trim()).includes('admin')
+  return false
 }
 
-type RoleDoc = {
-  _id: ObjectId
-  name: string
-  permissions: Permission[]
-}
-
-function jwtSecret(): string {
-  const secret = process.env.JWT_SECRET
-  if (!secret || secret.length < 32) {
-    throw new Error('Set JWT_SECRET to at least 32 characters')
-  }
-  return secret
-}
-
-function publicUser(user: UserDoc, role: RoleDoc): AuthUser {
-  return {
-    id: user._id.toHexString(),
-    email: user.email,
-    role: role.name,
-    permissions: role.permissions,
-  }
-}
-
-async function loadUser(db: Db, id: string): Promise<AuthUser | undefined> {
-  if (!ObjectId.isValid(id)) return undefined
-  const user = await db.collection<UserDoc>('users').findOne({ _id: new ObjectId(id) })
-  if (!user) return undefined
-  const role = await db.collection<RoleDoc>('roles').findOne({ _id: user.roleId })
-  if (!role) return undefined
-  return publicUser(user, role)
-}
-
-export async function login(email: string, password: string): Promise<AuthUser | undefined> {
-  const db = getDb()
-  const user = await db.collection<UserDoc>('users').findOne({
-    email: email.trim().toLowerCase(),
-  })
-  if (!user || !(await verifyPassword(password, user.passHash))) return undefined
-  const role = await db.collection<RoleDoc>('roles').findOne({ _id: user.roleId })
-  if (!role || role.name !== 'admin') return undefined
-  return publicUser(user, role)
-}
-
-export async function issueSession(user: AuthUser): Promise<string> {
-  return sign(
-    {
-      sub: user.id,
-      exp: Math.floor(Date.now() / 1000) + SESSION_SECONDS,
-    },
-    jwtSecret(),
-  )
-}
-
-export function writeSessionCookie(c: Parameters<typeof setCookie>[0], token: string): void {
-  setCookie(c, COOKIE, token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'Lax',
-    path: '/',
-    maxAge: SESSION_SECONDS,
-  })
-}
-
-export function clearSessionCookie(c: Parameters<typeof deleteCookie>[0]): void {
-  deleteCookie(c, COOKIE, { path: '/' })
-}
-
-function readToken(c: Parameters<typeof getCookie>[0]): string | undefined {
-  const header = c.req.header('Authorization')
-  if (header?.startsWith('Bearer ')) return header.slice('Bearer '.length)
-  return getCookie(c, COOKIE)
-}
-
-export const requireAuth = createMiddleware<AppEnv>(async (c, next) => {
-  const token = readToken(c)
-  if (!token) return c.json({ error: 'Unauthorized' }, 401)
-  try {
-    const payload = await verify(token, jwtSecret(), 'HS256')
-    const sub = payload.sub
-    if (typeof sub !== 'string') return c.json({ error: 'Unauthorized' }, 401)
-    const user = await loadUser(getDb(), sub)
-    if (!user || user.role !== 'admin') return c.json({ error: 'Unauthorized' }, 401)
-    c.set('user', user)
-  } catch {
+export const requireAdmin = createMiddleware<AppEnv>(async (c, next) => {
+  const session = await auth.api.getSession({ headers: c.req.raw.headers })
+  if (!session || !isAdmin(session.user.role)) {
     return c.json({ error: 'Unauthorized' }, 401)
   }
+  c.set('user', session.user)
+  c.set('session', session.session)
   await next()
 })
 
-export async function ensureAdminUser(db: Db): Promise<void> {
+export async function ensureAdminUser(): Promise<void> {
   const email = process.env.ADMIN_EMAIL?.trim().toLowerCase()
   const password = process.env.ADMIN_PASSWORD
   if (!email || !password) {
@@ -129,19 +63,29 @@ export async function ensureAdminUser(db: Db): Promise<void> {
     throw new Error('ADMIN_PASSWORD must be at least 8 characters')
   }
 
-  const existing = await db.collection<UserDoc>('users').findOne({ email })
+  const ctx = await auth.$context
+  const existing = await ctx.adapter.findOne({
+    model: 'user',
+    where: [{ field: 'email', value: email }],
+  })
   if (existing) {
     console.log(`Admin user already exists: ${email}`)
     return
   }
 
-  const role = await db.collection<RoleDoc>('roles').findOne({ name: 'admin' })
-  if (!role) throw new Error('admin role is missing; run schema setup first')
-
-  await db.collection('users').insertOne({
+  const created = await ctx.internalAdapter.createUser({
     email,
-    passHash: await hashPassword(password),
-    roleId: role._id,
+    name: 'Admin',
+    role: 'admin',
+    emailVerified: true,
+  })
+  if (!created) throw new Error('Failed to create admin user')
+
+  await ctx.internalAdapter.linkAccount({
+    userId: created.id,
+    providerId: 'credential',
+    accountId: created.id,
+    password: await ctx.password.hash(password),
   })
   console.log(`Admin user created: ${email}`)
 }

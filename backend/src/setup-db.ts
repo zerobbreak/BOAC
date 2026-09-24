@@ -5,6 +5,6 @@ import { ensureSchema } from './schema.js'
 
 const db = getDb()
 await ensureSchema(db)
-await ensureAdminUser(db)
+await ensureAdminUser()
 console.log('Database schema is ready')
 await closeDatabase()

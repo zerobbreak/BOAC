@@ -1,51 +1,31 @@
 import 'dotenv/config'
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
-import {
-  clearSessionCookie,
-  ensureAdminUser,
-  issueSession,
-  login,
-  requireAuth,
-  writeSessionCookie,
-  type AppEnv,
-} from './auth.js'
+import { cors } from 'hono/cors'
+import { auth, ensureAdminUser, frontendOrigin, requireAdmin, type AppEnv } from './auth.js'
 import { pingBucket } from './bucket.js'
-import { closeDatabase, getDb, pingDatabase } from './db.js'
+import { closeDatabase, pingDatabase } from './db.js'
 
 const app = new Hono<AppEnv>()
+
+app.use(
+  '*',
+  cors({
+    origin: frontendOrigin,
+    credentials: true,
+    allowHeaders: ['Content-Type', 'Authorization'],
+    allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  }),
+)
 
 app.get('/', (c) => {
   return c.text('Hello Hono!')
 })
 
-app.post('/auth/login', async (c) => {
-  const body = await c.req.json().catch(() => null)
-  const email = body && typeof body.email === 'string' ? body.email : ''
-  const password = body && typeof body.password === 'string' ? body.password : ''
-  if (!email || !password) {
-    return c.json({ error: 'Email and password are required' }, 400)
-  }
-
-  const user = await login(email, password)
-  if (!user) return c.json({ error: 'Invalid email or password' }, 401)
-
-  const token = await issueSession(user)
-  writeSessionCookie(c, token)
-  return c.json({ token, user })
-})
-
-app.post('/auth/logout', (c) => {
-  clearSessionCookie(c)
-  return c.json({ ok: true })
-})
-
-app.get('/auth/me', requireAuth, (c) => {
-  return c.json({ user: c.get('user') })
-})
+app.on(['POST', 'GET'], '/api/auth/*', (c) => auth.handler(c.req.raw))
 
 const admin = new Hono<AppEnv>()
-admin.use('*', requireAuth)
+admin.use('*', requireAdmin)
 admin.get('/', (c) => c.json({ ok: true, user: c.get('user') }))
 app.route('/admin', admin)
 
@@ -63,7 +43,7 @@ const server = serve({
   port,
 }, (info) => {
   console.log(`Server is running on http://localhost:${info.port}`)
-  ensureAdminUser(getDb()).catch((error: unknown) => {
+  ensureAdminUser().catch((error: unknown) => {
     console.error('Admin user setup failed', error)
   })
 })
