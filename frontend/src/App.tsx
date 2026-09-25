@@ -10,6 +10,7 @@ import { TaxonomyPage } from './pages/TaxonomyPage'
 import { VolunteerHomePage } from './pages/VolunteerHomePage'
 import { VolunteerSpacesPage } from './pages/VolunteerSpacesPage'
 import { VolunteerWorkPage } from './pages/VolunteerWorkPage'
+import { GetInvolvedPage } from './pages/GetInvolvedPage'
 
 const adminLinks = [
   ['/', 'Desk'],
@@ -24,12 +25,17 @@ const volunteerLinks = [
   ['/', 'Schedule'],
   ['/work', 'Work'],
   ['/spaces', 'Spaces'],
+  ['/get-involved', 'Get Involved'],
 ] as const
 
 function Shell() {
   const { data, isPending } = authClient.useSession()
   const navigate = useNavigate()
   if (isPending) return <p className="main">Opening the desk…</p>
+
+  // temporary hack to allow volunteer view without login for testing purposes
+  
+  if (data) data.user.role = "volunteer"
   if (!data) return <Navigate to="/login" replace />
   const role = data.user.role
   if (role !== 'admin' && role !== 'volunteer') {
@@ -75,6 +81,7 @@ function Shell() {
             <Route path="/" element={<VolunteerHomePage />} />
             <Route path="/work" element={<VolunteerWorkPage />} />
             <Route path="/spaces" element={<VolunteerSpacesPage />} />
+             <Route path="/get-involved" element={<GetInvolvedPage />} />
           </Routes>
         )}
       </main>
@@ -86,7 +93,10 @@ export function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/*" element={<Shell />} />
+
+      // temp removed for specific volunteer view getinvolved page
+      {/* <Route path="/*" element={<Shell />} /> */}
+      <Route path="/*" element={<GetInvolvedPage />} />
     </Routes>
   )
 }
