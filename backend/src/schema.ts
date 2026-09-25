@@ -70,6 +70,7 @@ export const validators = {
         maxItems: 20,
         items: objectId,
       },
+      coverKey: { bsonType: 'string', minLength: 1 },
       createdAt: { bsonType: 'date' },
       updatedAt: { bsonType: 'date' },
     },
@@ -105,8 +106,14 @@ export const validators = {
       fullName: { bsonType: 'string', minLength: 1 },
       email,
       phone: { bsonType: 'string' },
-      status: { enum: ['submitted', 'under_review', 'contacted'] },
+      status: { enum: ['submitted', 'under_review', 'needs_info', 'declined', 'accepted'] },
       internalNotes: { bsonType: 'string' },
+      fileKeys: {
+        bsonType: 'array',
+        uniqueItems: true,
+        maxItems: 3,
+        items: { bsonType: 'string', minLength: 1 },
+      },
       reviewedBy: objectId,
       submittedAt: { bsonType: 'date' },
     },
@@ -115,7 +122,10 @@ export const validators = {
 
 export type CollectionName = keyof typeof validators
 
-const indexes: Record<CollectionName, Array<{ key: Record<string, 1 | -1>; unique?: boolean }>> = {
+const indexes: Record<
+  CollectionName,
+  Array<{ key: Record<string, 1 | -1>; unique?: boolean; partialFilterExpression?: Record<string, unknown> }>
+> = {
   roles: [{ key: { name: 1 }, unique: true }],
   users: [{ key: { email: 1 }, unique: true }],
   categories: [{ key: { name: 1 }, unique: true }],
@@ -130,6 +140,13 @@ const indexes: Record<CollectionName, Array<{ key: Record<string, 1 | -1>; uniqu
   volunteer_applications: [
     { key: { opportunityId: 1 } },
     { key: { status: 1 } },
+    {
+      key: { email: 1, opportunityId: 1 },
+      unique: true,
+      partialFilterExpression: {
+        status: { $in: ['submitted', 'under_review', 'needs_info', 'accepted'] },
+      },
+    },
   ],
   volunteer_work: [{ key: { volunteerId: 1, updatedAt: -1 } }],
 }
@@ -151,6 +168,9 @@ async function ensureCollection(db: Db, name: CollectionName): Promise<void> {
       validationAction: 'error',
     })
   } else {
+    if (name === 'volunteer_applications') {
+      await db.collection(name).updateMany({ status: 'contacted' }, { $set: { status: 'under_review' } })
+    }
     await db.command({
       collMod: name,
       validator,
@@ -162,6 +182,9 @@ async function ensureCollection(db: Db, name: CollectionName): Promise<void> {
   for (const index of indexes[name]) {
     await db.collection(name).createIndex(index.key, {
       unique: index.unique ?? false,
+      ...(index.partialFilterExpression
+        ? { partialFilterExpression: index.partialFilterExpression }
+        : {}),
     })
   }
 }
