@@ -1,0 +1,107 @@
+:root {
+  --paper: #efe6d6;
+  --ink: #1c1712;
+  --stamp: #8f3d1e;
+  --rule: rgba(28, 23, 18, 0.16);
+  --card: #f7f1e6;
+  --muted: #5c5348;
+  color: var(--ink);
+  background:
+    linear-gradient(180deg, rgba(28, 23, 18, 0.04) 1px, transparent 1px) 0 0 / 100% 28px,
+    var(--paper);
+  font-family: "Newsreader", Georgia, serif;
+  font-size: 18px;
+  line-height: 1.45;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; }
+button, input, select, textarea {
+  font: inherit;
+  color: inherit;
+}
+button, .nav a {
+  cursor: pointer;
+}
+a { color: inherit; }
+
+.login {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+}
+.login form, .panel, .card {
+  background: var(--card);
+  border: 1px solid var(--ink);
+  box-shadow: 8px 8px 0 var(--ink);
+}
+.login form {
+  width: min(440px, 100%);
+  padding: 1.5rem;
+}
+h1, h2, .mark {
+  font-family: Fraunces, Georgia, serif;
+  font-weight: 680;
+  letter-spacing: -0.03em;
+  margin: 0;
+}
+.mark { font-size: 1.6rem; }
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 0.72rem;
+  color: var(--stamp);
+}
+label { display: grid; gap: 0.3rem; margin: 0.8rem 0; }
+input, select, textarea {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--ink);
+  padding: 0.4rem 0;
+}
+textarea { min-height: 7rem; resize: vertical; }
+button, .nav a {
+  background: var(--ink);
+  color: var(--paper);
+  border: none;
+  padding: 0.45rem 0.8rem;
+  text-decoration: none;
+}
+button.ghost, .nav a.active {
+  background: var(--stamp);
+}
+.error { color: var(--stamp); }
+
+.shell {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  min-height: 100vh;
+}
+.nav {
+  padding: 1.4rem 1rem;
+  border-right: 1px solid var(--ink);
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+.nav nav { display: grid; gap: 0.4rem; }
+.main { padding: 1.6rem; }
+.row {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  align-items: end;
+}
+.list { display: grid; gap: 0.8rem; margin-top: 1rem; }
+.card { padding: 0.9rem 1rem; }
+.muted { color: var(--muted); }
+.split {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 1rem;
+}
+@media (max-width: 900px) {
+  .shell, .split { grid-template-columns: 1fr; }
+  .nav { border-right: none; border-bottom: 1px solid var(--ink); }
+}

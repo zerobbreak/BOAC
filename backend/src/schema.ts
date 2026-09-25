@@ -95,6 +95,8 @@ export const validators = {
       status: { enum: ['planned', 'in_progress', 'done'] },
       notes: { bsonType: 'string' },
       opportunityId: objectId,
+      startsAt: { bsonType: 'date' },
+      hours: { bsonType: ['double', 'int'], minimum: 0 },
       createdAt: { bsonType: 'date' },
       updatedAt: { bsonType: 'date' },
     },
@@ -148,7 +150,10 @@ const indexes: Record<
       },
     },
   ],
-  volunteer_work: [{ key: { volunteerId: 1, updatedAt: -1 } }],
+  volunteer_work: [
+    { key: { volunteerId: 1, updatedAt: -1 } },
+    { key: { volunteerId: 1, startsAt: 1 } },
+  ],
 }
 
 const seedRoles: Array<{ name: string; permissions: Permission[] }> = [

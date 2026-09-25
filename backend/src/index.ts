@@ -6,6 +6,7 @@ import { auth, ensureAdminUser, ensureVolunteerUser, frontendOrigin, requireAdmi
 import { pingBucket } from './bucket.js'
 import { closeDatabase, pingDatabase } from './db.js'
 import { applicationRoutes, publicApplications } from './applications.js'
+import { assignmentRoutes } from './assignments.js'
 import { categoryRoutes, contentRoutes, publicRoutes, tagRoutes } from './content.js'
 import { opportunityRoutes, publicOpportunities } from './opportunities.js'
 import volunteer from './volunteer-work.js'
@@ -36,6 +37,7 @@ admin.route('/categories', categoryRoutes)
 admin.route('/tags', tagRoutes)
 admin.route('/opportunities', opportunityRoutes)
 admin.route('/applications', applicationRoutes)
+admin.route('/assignments', assignmentRoutes)
 app.route('/admin', admin)
 app.route('/opportunities', publicOpportunities)
 app.route('/applications', publicApplications)
