@@ -13,6 +13,7 @@ import { VolunteerWorkPage } from './pages/VolunteerWorkPage'
 import { GetInvolvedPage } from './pages/GetInvolvedPage'
 import { VolunteerFormPage } from './pages/VolunteerFormPage'
 import { DonationPage } from './pages/DonationPage'
+import { ContactPage } from './pages/ContactPage'
 
 const adminLinks = [
   ['/', 'Desk'],
@@ -30,6 +31,7 @@ const volunteerLinks = [
   ['/get-involved', 'Get Involved'],
   ['/volunteer-form', 'Volunteer Form'],
   ['/donate', 'Donate'],
+  ['/contact', 'Contact'],
 ] as const
 
 function Shell() {
@@ -84,6 +86,7 @@ function Shell() {
             <Route path="/get-involved" element={<GetInvolvedPage />} />
             <Route path="/volunteer-form" element={<VolunteerFormPage />} />
             <Route path="/donate" element={<DonationPage />} />
+            <Route path="/contact" element={<ContactPage />} />
 
           </Routes>
         )}
