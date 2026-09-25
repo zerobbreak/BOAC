@@ -8,7 +8,7 @@ export function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
 
-  if (!isPending && data?.user.role === 'admin') return <Navigate to="/" replace />
+  if (!isPending && data?.user) return <Navigate to="/" replace />
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
@@ -20,8 +20,8 @@ export function LoginPage() {
   return (
     <div className="login">
       <form onSubmit={(event) => void onSubmit(event)}>
-        <p className="eyebrow">Admin</p>
-        <h1>Sign in to the BOAC desk</h1>
+        <p className="eyebrow">BOAC</p>
+        <h1>Sign in</h1>
         <label>
           Email
           <input value={email} onChange={(event) => setEmail(event.target.value)} type="email" required />
