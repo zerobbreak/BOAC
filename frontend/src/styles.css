@@ -95,6 +95,7 @@ button.ghost, .nav a.active {
 }
 .list { display: grid; gap: 0.8rem; margin-top: 1rem; }
 .card { padding: 0.9rem 1rem; }
+.panel { padding: 1rem; }
 .muted { color: var(--muted); }
 .split {
   display: grid;

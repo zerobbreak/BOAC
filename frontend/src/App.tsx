@@ -7,8 +7,11 @@ import { DeskPage } from './pages/DeskPage'
 import { LoginPage } from './pages/LoginPage'
 import { OpportunitiesPage } from './pages/OpportunitiesPage'
 import { TaxonomyPage } from './pages/TaxonomyPage'
+import { VolunteerHomePage } from './pages/VolunteerHomePage'
+import { VolunteerSpacesPage } from './pages/VolunteerSpacesPage'
+import { VolunteerWorkPage } from './pages/VolunteerWorkPage'
 
-const links = [
+const adminLinks = [
   ['/', 'Desk'],
   ['/content', 'Content'],
   ['/library', 'Library'],
@@ -17,20 +20,29 @@ const links = [
   ['/assign', 'Assign'],
 ] as const
 
+const volunteerLinks = [
+  ['/', 'Schedule'],
+  ['/work', 'Work'],
+  ['/spaces', 'Spaces'],
+] as const
+
 function Shell() {
   const { data, isPending } = authClient.useSession()
   const navigate = useNavigate()
   if (isPending) return <p className="main">Opening the desk…</p>
   if (!data) return <Navigate to="/login" replace />
-  if (data.user.role !== 'admin') {
-    return <p className="main">This desk is for an admin account.</p>
+  const role = data.user.role
+  if (role !== 'admin' && role !== 'volunteer') {
+    return <p className="main">This desk is for an admin or volunteer account.</p>
   }
+  const links = role === 'admin' ? adminLinks : volunteerLinks
 
   return (
     <div className="shell">
       <aside className="nav">
         <p className="eyebrow">BOAC</p>
-        <p className="mark">Desk</p>
+        <p className="mark">{data.user.name}</p>
+        <p className="muted">{data.user.email}</p>
         <nav>
           {links.map(([to, label]) => (
             <NavLink key={to} to={to} end={to === '/'} className={({ isActive }) => (isActive ? 'active' : undefined)}>
@@ -47,17 +59,24 @@ function Shell() {
         >
           Sign out
         </button>
-        <p className="muted">{data.user.email}</p>
       </aside>
       <main className="main">
-        <Routes>
-          <Route path="/" element={<DeskPage />} />
-          <Route path="/content" element={<ContentPage />} />
-          <Route path="/library" element={<TaxonomyPage />} />
-          <Route path="/opportunities" element={<OpportunitiesPage />} />
-          <Route path="/applications" element={<ApplicationsPage />} />
-          <Route path="/assign" element={<AssignPage />} />
-        </Routes>
+        {role === 'admin' ? (
+          <Routes>
+            <Route path="/" element={<DeskPage />} />
+            <Route path="/content" element={<ContentPage />} />
+            <Route path="/library" element={<TaxonomyPage />} />
+            <Route path="/opportunities" element={<OpportunitiesPage />} />
+            <Route path="/applications" element={<ApplicationsPage />} />
+            <Route path="/assign" element={<AssignPage />} />
+          </Routes>
+        ) : (
+          <Routes>
+            <Route path="/" element={<VolunteerHomePage />} />
+            <Route path="/work" element={<VolunteerWorkPage />} />
+            <Route path="/spaces" element={<VolunteerSpacesPage />} />
+          </Routes>
+        )}
       </main>
     </div>
   )
