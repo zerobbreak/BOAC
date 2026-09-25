@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto'
 import { betterAuth } from 'better-auth'
 import { mongodbAdapter } from '@better-auth/mongo-adapter'
 import { admin as adminPlugin } from 'better-auth/plugins'
@@ -57,6 +58,30 @@ function requireRole(expected: 'admin' | 'volunteer') {
 
 export const requireAdmin = requireRole('admin')
 export const requireVolunteer = requireRole('volunteer')
+
+const staffRoles = ['admin', 'editor', 'reviewer', 'user', 'volunteer'] as const
+type StaffRole = (typeof staffRoles)[number]
+
+export function staffRole(role: unknown): StaffRole {
+  if (typeof role === 'string' && (staffRoles as readonly string[]).includes(role)) {
+    return role as StaffRole
+  }
+  return 'user'
+}
+
+export function requireStaff(action: 'manage_content' | 'publish_content') {
+  return createMiddleware<AppEnv>(async (c, next) => {
+    const session = await auth.api.getSession({ headers: c.req.raw.headers })
+    if (!session) return c.json({ error: 'Unauthorized' }, 401)
+    const allowed = await auth.api.userHasPermission({
+      body: { role: staffRole(session.user.role), permissions: { staff: [action] } },
+    })
+    if (!allowed.success) return c.json({ error: 'Forbidden' }, 403)
+    c.set('user', session.user)
+    c.set('session', session.session)
+    await next()
+  })
+}
 
 export async function ensureAdminUser(): Promise<void> {
   const email = process.env.ADMIN_EMAIL?.trim().toLowerCase()
@@ -138,4 +163,36 @@ export async function ensureVolunteerUser(): Promise<void> {
     password: await ctx.password.hash(password),
   })
   console.log(`Volunteer user created: ${email}`)
+}
+
+export async function provisionVolunteer(
+  email: string,
+  name: string,
+): Promise<{ id: string; email: string; password: string | null }> {
+  const normalized = email.trim().toLowerCase()
+  const ctx = await auth.$context
+  const existing = await ctx.adapter.findOne<{ id: string; role?: string }>({
+    model: 'user',
+    where: [{ field: 'email', value: normalized }],
+  })
+  if (existing) {
+    if (existing.role !== 'volunteer') {
+      throw new Error('Email belongs to another role')
+    }
+    return { id: existing.id, email: normalized, password: null }
+  }
+
+  const password = randomBytes(18).toString('base64url')
+  const created = await ctx.internalAdapter.createUser(
+    { email: normalized, name, role: 'volunteer', emailVerified: true },
+    { method: 'email-password' },
+  )
+  if (!created) throw new Error('Failed to create volunteer user')
+  await ctx.internalAdapter.linkAccount({
+    userId: created.id,
+    providerId: 'credential',
+    accountId: created.id,
+    password: await ctx.password.hash(password),
+  })
+  return { id: created.id, email: normalized, password }
 }
