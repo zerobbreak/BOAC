@@ -5,6 +5,9 @@ import { cors } from 'hono/cors'
 import { auth, ensureAdminUser, ensureVolunteerUser, frontendOrigin, requireAdmin, type AppEnv } from './auth.js'
 import { pingBucket } from './bucket.js'
 import { closeDatabase, pingDatabase } from './db.js'
+import { applicationRoutes, publicApplications } from './applications.js'
+import { categoryRoutes, contentRoutes, publicRoutes, tagRoutes } from './content.js'
+import { opportunityRoutes, publicOpportunities } from './opportunities.js'
 import volunteer from './volunteer-work.js'
 
 const app = new Hono<AppEnv>()
@@ -28,7 +31,15 @@ app.on(['POST', 'GET'], '/api/auth/*', (c) => auth.handler(c.req.raw))
 const admin = new Hono<AppEnv>()
 admin.use('*', requireAdmin)
 admin.get('/', (c) => c.json({ ok: true, user: c.get('user') }))
+admin.route('/content', contentRoutes)
+admin.route('/categories', categoryRoutes)
+admin.route('/tags', tagRoutes)
+admin.route('/opportunities', opportunityRoutes)
+admin.route('/applications', applicationRoutes)
 app.route('/admin', admin)
+app.route('/opportunities', publicOpportunities)
+app.route('/applications', publicApplications)
+app.route('/', publicRoutes)
 app.route('/volunteer', volunteer)
 
 app.get('/health', async (c) => {
