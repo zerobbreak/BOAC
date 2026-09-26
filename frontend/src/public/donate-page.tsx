@@ -1,12 +1,19 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { LitemaBand, SplitHero } from './sections'
+import heroElder from './images/hero-elder.webp'
 
 const accountDetails = [
-  ['Account Name', 'Bokwidi Old Age Centre'],
+  ['Account name', 'Bokwidi Old Age Centre'],
   ['Bank', 'Standard Bank'],
-  ['Account Number', '123 456 789 0'],
-  ['Branch Code', '051 001'],
-  ['Reference', 'Your Name / Org'],
+  ['Account number', '123 456 789 0'],
+  ['Branch code', '051 001'],
+] as const
+
+const reasons = [
+  ['Daily nutrition', 'Balanced, culturally familiar meals that keep our seniors healthy and strong.'],
+  ['Health care', 'Regular check-ups, help with medication, and care for age-related conditions.'],
+  ['Community programmes', 'Social activities, skills workshops and well-being support that prevent isolation.'],
 ] as const
 
 export function DonatePage() {
@@ -15,7 +22,8 @@ export function DonatePage() {
   async function copyDetails() {
     try {
       if (!navigator.clipboard) throw new Error('Clipboard unavailable')
-      await navigator.clipboard.writeText(accountDetails.map(([label, value]) => `${label}: ${value}`).join('\n'))
+      const lines = accountDetails.map(([label, value]) => `${label}: ${value}`)
+      await navigator.clipboard.writeText([...lines, 'Reference: your name or organisation'].join('\n'))
       setCopyState('copied')
     } catch {
       setCopyState('failed')
@@ -24,52 +32,56 @@ export function DonatePage() {
   }
 
   return (
-    <section>
-      <p className="eyebrow">Empower Our Elders, Strengthen Our Community</p>
-      <h1>Support BOAC</h1>
-
-      <div className="panel" style={{ marginTop: '1.4rem' }}>
-        <h2>Your contribution directly impacts daily lives.</h2>
-        <p className="muted">
-          Every donation helps us provide nutritious meals, essential healthcare, and a safe, dignified environment
-          for the elders of Bokwidi Village.
+    <>
+      <SplitHero kicker="Give" title="Give to the elders of Bokwidi." image={heroElder} alt="An elder of Bokwidi Village smiling in the community garden">
+        <p className="lede">
+          Your gift pays for nutritious meals, health care, and a safe, dignified place to spend the day — for those
+          who guided us.
         </p>
-      </div>
+      </SplitHero>
 
-      <h2 style={{ marginTop: '2rem' }}>Why Your Support Matters</h2>
-      <div className="cards">
-        <article className="card">
-          <h3>Daily Nutrition</h3>
-          <p>Balanced, culturally appropriate meals that help seniors maintain health and vitality.</p>
-        </article>
-        <article className="card">
-          <h3>Healthcare Access</h3>
-          <p>Regular check-ups, medication support, and specialized care for age-related conditions.</p>
-        </article>
-        <article className="card">
-          <h3>Community Programs</h3>
-          <p>Social activities, skills workshops, and mental well-being initiatives that prevent isolation.</p>
-        </article>
-      </div>
+      <LitemaBand />
 
-      <h2 style={{ marginTop: '2rem' }}>Make a Bank Transfer</h2>
-      <div className="panel" style={{ marginTop: '1rem' }}>
-        {accountDetails.map(([label, value]) => (
-          <p key={label}><strong>{label}:</strong> {value}</p>
-        ))}
-        <button type="button" onClick={() => void copyDetails()}>
-          {copyState === 'copied' ? 'Copied!' : 'Copy Account Details'}
-        </button>
-        {copyState === 'failed' ? (
-          <p className="error">Your browser blocked copying. Please select and copy the details above.</p>
-        ) : null}
-      </div>
+      <section className="section">
+        <div className="wrap aside-grid">
+          <div className="stack reveal">
+            <h2 className="section-title">What your gift pays for</h2>
+            <ul className="reasons">
+              {reasons.map(([title, text]) => (
+                <li key={title}>
+                  <h3>{title}</h3>
+                  <p>{text}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
 
-      <h2 style={{ marginTop: '2rem' }}>Need Assistance?</h2>
-      <div className="card" style={{ marginTop: '1rem' }}>
-        <p>For corporate sponsorships, in-kind donations, or partnership enquiries, our team is ready to assist.</p>
-        <Link className="button" to="/contact?subject=donation">Contact Us →</Link>
-      </div>
-    </section>
+          <div className="form-card reveal">
+            <h2>Make a bank transfer</h2>
+            <p className="form-intro">Use these details to give directly to the centre.</p>
+            <dl className="bank">
+              {accountDetails.map(([label, value]) => (
+                <div key={label} style={{ display: 'contents' }}>
+                  <dt>{label}</dt>
+                  <dd>{value}</dd>
+                </div>
+              ))}
+              <dt>Reference</dt>
+              <dd className="bank-muted">Your name or organisation</dd>
+            </dl>
+            <button type="button" className="btn btn-line btn-block" onClick={() => void copyDetails()}>
+              {copyState === 'copied' ? 'Copied' : 'Copy bank details'}
+            </button>
+            <p role="status" className="form-error" style={{ margin: copyState === 'failed' ? '12px 0 0' : 0 }}>
+              {copyState === 'failed' ? 'Your browser blocked copying. Please select and copy the details above.' : ''}
+            </p>
+            <p style={{ marginTop: 20, color: 'var(--soil)' }}>
+              Giving goods, or sponsoring as a business?{' '}
+              <Link to="/contact?subject=donation" className="text-link">Talk to us</Link>
+            </p>
+          </div>
+        </div>
+      </section>
+    </>
   )
 }

@@ -1,61 +1,84 @@
 import { Link } from 'react-router-dom'
+import { ArrowIcon, LitemaBand, SplitHero } from './sections'
+import donateHero from './images/donate-hero.webp'
+
+const ways = [
+  {
+    to: '/volunteer',
+    title: 'Volunteer',
+    text: 'Share your time and skills — from helping with daily activities to leading a workshop.',
+  },
+  {
+    to: '/contact?subject=partnership',
+    title: 'Partner with us',
+    text: 'Businesses and community groups: let’s build something lasting for Bokwidi together.',
+  },
+  {
+    to: '/contact?subject=donation',
+    title: 'Donate resources',
+    text: 'Medical supplies, mobility aids, food parcels and warm clothing for our elders.',
+  },
+  {
+    to: '/donate',
+    title: 'Give money',
+    text: 'A bank transfer pays for meals, health care and programmes.',
+  },
+]
+
+const journey = [
+  ['Reach out', 'Choose your path — volunteer, partner or donate — and send us a quick enquiry.'],
+  ['Connect', 'Our team gets in touch to match your skills or resources to what we need now.'],
+  ['See the impact', 'Join the community and see the difference, in person, with the elders of Bokwidi.'],
+] as const
 
 export function GetInvolvedPage() {
   return (
-    <section>
-      <p className="eyebrow">Bokwidi Old Age Centre</p>
-      <h1>Get Involved</h1>
-
-      <div className="panel" style={{ marginTop: '1.4rem' }}>
-        <h2>150+ active community members making a daily impact.</h2>
-        <p className="muted">
-          Every day, volunteers, partners, and donors help us uplift the elders of Bokwidi Village.
+    <>
+      <SplitHero kicker="Get involved" title="There’s a place for you here." image={donateHero} alt="An elder’s hands held in a volunteer’s">
+        <p className="lede">
+          More than 150 people from the community already give their time, skills or goods. Your contribution helps
+          build a stronger, warmer home for the elders of Bokwidi.
         </p>
-      </div>
+        <div className="actions">
+          <Link to="/volunteer" className="btn btn-clay">Become a volunteer</Link>
+        </div>
+      </SplitHero>
 
-      <h2 style={{ marginTop: '2rem' }}>Ways to Support</h2>
-      <div className="cards">
-        <article className="card">
-          <h3>Volunteer</h3>
-          <p>
-            Share your time and skills. From helping with daily activities to leading workshops, your presence
-            brings immense joy and value to our elders.
-          </p>
-          <Link className="button" to="/volunteer-form">Join as Volunteer →</Link>
-        </article>
-        <article className="card">
-          <h3>Partner With Us</h3>
-          <p>
-            Corporate and community partnerships are vital. Let’s collaborate on initiatives that create
-            sustainable impact for the Bokwidi community.
-          </p>
-          <Link className="button" to="/contact?subject=partnership">Partnership Enquiry →</Link>
-        </article>
-        <article className="card">
-          <h3>Donate Resources</h3>
-          <p>
-            We welcome in-kind donations such as medical supplies, mobility aids, food parcels, and comfortable
-            clothing for our residents.
-          </p>
-          <Link className="button" to="/contact?subject=donation">Resource Enquiry →</Link>
-        </article>
-      </div>
+      <LitemaBand />
 
-      <h2 style={{ marginTop: '2rem' }}>The Journey of Giving Back</h2>
-      <div className="cards">
-        <div className="panel">
-          <h3>1. Reach Out</h3>
-          <p>Choose your path — volunteer, partner, or donate — and submit a quick enquiry.</p>
+      <section className="section">
+        <div className="wrap">
+          <h2 className="section-title reveal" style={{ marginBottom: 40 }}>Ways to help</h2>
+          <div className="rows">
+            {ways.map((way, index) => (
+              <Link key={way.title} to={way.to} className="row-link">
+                <span className="row-num">{index + 1}</span>
+                <span className="row-title">{way.title}</span>
+                <span className="row-text">{way.text}</span>
+                <span className="row-arrow"><ArrowIcon /></span>
+              </Link>
+            ))}
+          </div>
         </div>
-        <div className="panel">
-          <h3>2. Connect</h3>
-          <p>Our team contacts you to align your skills or resources with our current needs.</p>
+      </section>
+
+      <section className="dark section">
+        <div className="wrap">
+          <div className="section-head reveal">
+            <h2 className="section-title">What happens next</h2>
+            <p className="lede">How your involvement turns into real, lasting change for our elders.</p>
+          </div>
+          <div className="statements statements-3">
+            {journey.map(([title, text], index) => (
+              <div key={title} className="statement reveal">
+                <h3>Step {index + 1}</h3>
+                <p>{title}</p>
+                <p className="statement-text">{text}</p>
+              </div>
+            ))}
+          </div>
         </div>
-        <div className="panel">
-          <h3>3. Impact</h3>
-          <p>Join the community and see the direct, warm impact on the elders of Bokwidi.</p>
-        </div>
-      </div>
-    </section>
+      </section>
+    </>
   )
 }

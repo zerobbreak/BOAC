@@ -8,26 +8,26 @@ import { MessagesPage } from './messages-page'
 import { OpportunitiesPage } from './opportunities-page'
 
 export const adminLinks = [
-  ['/', 'Desk'],
-  ['/content', 'Content'],
-  ['/library', 'Library'],
-  ['/opportunities', 'Opportunities'],
-  ['/applications', 'Applications'],
-  ['/assign', 'Assign'],
-  ['/messages', 'Messages'],
+  ['/desk', 'Desk'],
+  ['/desk/content', 'Content'],
+  ['/desk/library', 'Library'],
+  ['/desk/opportunities', 'Opportunities'],
+  ['/desk/applications', 'Applications'],
+  ['/desk/assign', 'Assign'],
+  ['/desk/messages', 'Messages'],
 ] as const
 
 export function AdminRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<DeskPage />} />
-      <Route path="/content" element={<ContentPage />} />
-      <Route path="/library" element={<LibraryPage />} />
-      <Route path="/opportunities" element={<OpportunitiesPage />} />
-      <Route path="/applications" element={<ApplicationsPage />} />
-      <Route path="/assign" element={<AssignPage />} />
-      <Route path="/messages" element={<MessagesPage />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route index element={<DeskPage />} />
+      <Route path="content" element={<ContentPage />} />
+      <Route path="library" element={<LibraryPage />} />
+      <Route path="opportunities" element={<OpportunitiesPage />} />
+      <Route path="applications" element={<ApplicationsPage />} />
+      <Route path="assign" element={<AssignPage />} />
+      <Route path="messages" element={<MessagesPage />} />
+      <Route path="*" element={<Navigate to="/desk" replace />} />
     </Routes>
   )
 }

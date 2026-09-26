@@ -2,11 +2,12 @@ import { useState, type FormEvent } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
 import { client, errorText, unwrap } from '../lib/api-client'
+import { LitemaBand } from './sections'
 
 const subjects = [
-  ['general', 'General Inquiry'],
-  ['volunteer', 'Volunteer'],
-  ['donation', 'Donation'],
+  ['general', 'General question'],
+  ['volunteer', 'Volunteering'],
+  ['donation', 'Donations and sponsorship'],
   ['partnership', 'Partnership'],
 ] as const
 
@@ -35,69 +36,82 @@ export function ContactPage() {
   }
 
   return (
-    <section>
-      <p className="eyebrow">Bokwidi Old Age Centre</p>
-      <h1>Contact Us</h1>
-
-      <div className="split" style={{ marginTop: '1.4rem' }}>
-        <div className="panel">
-          <h2>Our Location</h2>
-          <p><strong>Address:</strong><br />Bokwidi Village, Waterberg District, Limpopo, South Africa</p>
-          <p><strong>Phone:</strong><br /><a href="tel:+27151234567">+27 (0)15 123 4567</a></p>
-          <p><strong>Email:</strong><br /><a href="mailto:info@bokwidioldagecentre.org.za">info@bokwidioldagecentre.org.za</a></p>
-          <p><strong>Hours:</strong><br />Mon–Fri: 08:00–16:00<br />Weekends: Closed</p>
-          <a
-            className="button"
-            href="https://www.google.com/maps/search/?api=1&query=Bokwidi+Village+Limpopo"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Open in Maps →
-          </a>
+    <>
+      <div className="wrap">
+        <div className="intro">
+          <p className="kicker">Contact</p>
+          <h1 className="page-title">Come by, call, or write.</h1>
+          <p className="lede">Questions about care, volunteering or giving — our team replies within one or two working days.</p>
         </div>
-
-        {send.isSuccess ? (
-          <div className="panel">
-            <h2>Message sent</h2>
-            <p className="success">Thank you. Our team will reply to your email within a few working days.</p>
-            <button type="button" onClick={() => send.reset()}>Send another message</button>
-          </div>
-        ) : (
-          <form className="panel" onSubmit={onSubmit}>
-            <h2>Send Us a Message</h2>
-            <label>
-              Full Name
-              <input maxLength={200} value={form.name} onChange={(event) => update('name', event.target.value)} required />
-            </label>
-            <label>
-              Email Address
-              <input type="email" value={form.email} onChange={(event) => update('email', event.target.value)} required />
-            </label>
-            <label>
-              Phone Number (Optional)
-              <input type="tel" maxLength={40} value={form.phone} onChange={(event) => update('phone', event.target.value)} />
-            </label>
-            <label>
-              Subject
-              <select value={form.subject} onChange={(event) => update('subject', subjectFrom(event.target.value))}>
-                {subjects.map(([key, label]) => <option key={key} value={key}>{label}</option>)}
-              </select>
-            </label>
-            <label>
-              Message
-              <textarea
-                placeholder="How can we help you today?"
-                maxLength={5000}
-                value={form.message}
-                onChange={(event) => update('message', event.target.value)}
-                required
-              />
-            </label>
-            {send.error ? <p className="error">{errorText(send.error, 'Message could not be sent')}</p> : null}
-            <button type="submit" disabled={send.isPending}>{send.isPending ? 'Sending…' : 'Send Message'}</button>
-          </form>
-        )}
       </div>
-    </section>
+
+      <LitemaBand />
+
+      <section className="section">
+        <div className="wrap aside-grid">
+          <div className="stack">
+            <dl className="details">
+              <div><dt>Address</dt><dd>Bokwidi Village, Waterberg District, Limpopo, South Africa</dd></div>
+              <div><dt>Phone</dt><dd><a href="tel:+27151234567">+27 (0)15 123 4567</a></dd></div>
+              <div><dt>Email</dt><dd><a href="mailto:info@bokwidioldagecentre.org.za">info@bokwidioldagecentre.org.za</a></dd></div>
+              <div><dt>Hours</dt><dd>Monday – Friday, 08:00 – 16:00<br />Closed weekends</dd></div>
+            </dl>
+            <a className="map-link" href="https://www.google.com/maps/search/?api=1&query=Bokwidi+Village+Limpopo" target="_blank" rel="noreferrer">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z" />
+                <circle cx="12" cy="9.5" r="2.5" />
+              </svg>
+              <div>
+                <strong>Find us on the map</strong>
+                <span>Opens Google Maps in a new tab</span>
+              </div>
+            </a>
+          </div>
+
+          <div className="form-card">
+            {send.isSuccess ? (
+              <div className="form-done" role="status">
+                <h2>Message sent.</h2>
+                <p>Thank you. Our team will reply to your email within one or two working days.</p>
+                <button type="button" className="btn btn-line" onClick={() => send.reset()}>Send another message</button>
+              </div>
+            ) : (
+              <form onSubmit={onSubmit}>
+                <h2>Send a message</h2>
+                <p className="form-intro">Everything except your phone number is required.</p>
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label htmlFor="contact-name">Full name</label>
+                    <input id="contact-name" className="input" autoComplete="name" maxLength={200} value={form.name} onChange={(event) => update('name', event.target.value)} required />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="contact-email">Email</label>
+                    <input id="contact-email" type="email" className="input" autoComplete="email" value={form.email} onChange={(event) => update('email', event.target.value)} required />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="contact-phone">Phone (optional)</label>
+                    <input id="contact-phone" type="tel" className="input" autoComplete="tel" maxLength={40} value={form.phone} onChange={(event) => update('phone', event.target.value)} />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="contact-subject">About</label>
+                    <select id="contact-subject" className="input" value={form.subject} onChange={(event) => update('subject', subjectFrom(event.target.value))}>
+                      {subjects.map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label htmlFor="contact-message">Message</label>
+                  <textarea id="contact-message" className="input" maxLength={5000} value={form.message} onChange={(event) => update('message', event.target.value)} required />
+                </div>
+                {send.error ? <p className="form-error" role="alert">{errorText(send.error, 'Message could not be sent')}</p> : null}
+                <button type="submit" className="btn btn-clay btn-block" disabled={send.isPending}>
+                  {send.isPending ? 'Sending…' : 'Send message'}
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      </section>
+    </>
   )
 }
