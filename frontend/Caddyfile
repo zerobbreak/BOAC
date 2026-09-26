@@ -1,0 +1,21 @@
+{
+	admin off
+}
+
+:{$PORT:8080} {
+	encode gzip
+
+	# API calls go through this origin so the Better Auth session cookie is first-party.
+	handle_path /_api/* {
+		reverse_proxy {$API_UPSTREAM} {
+			header_up Host {upstream_hostport}
+		}
+	}
+
+	# SPA: unknown paths fall back to index.html for React Router.
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+}
