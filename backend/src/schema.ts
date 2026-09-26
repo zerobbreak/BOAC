@@ -108,6 +108,9 @@ export const validators = {
       fullName: { bsonType: 'string', minLength: 1 },
       email,
       phone: { bsonType: 'string' },
+      skills: { bsonType: 'string', maxLength: 2000 },
+      availability: { bsonType: 'string', maxLength: 2000 },
+      motivation: { bsonType: 'string', maxLength: 2000 },
       status: { enum: ['submitted', 'under_review', 'needs_info', 'declined', 'accepted'] },
       internalNotes: { bsonType: 'string' },
       fileKeys: {
@@ -118,6 +121,18 @@ export const validators = {
       },
       reviewedBy: objectId,
       submittedAt: { bsonType: 'date' },
+    },
+  ),
+  contact_messages: collectionSchema(
+    ['name', 'email', 'subject', 'message', 'status', 'createdAt'],
+    {
+      name: { bsonType: 'string', minLength: 1, maxLength: 200 },
+      email,
+      phone: { bsonType: 'string', maxLength: 40 },
+      subject: { enum: ['general', 'volunteer', 'donation', 'partnership'] },
+      message: { bsonType: 'string', minLength: 1, maxLength: 5000 },
+      status: { enum: ['new', 'handled'] },
+      createdAt: { bsonType: 'date' },
     },
   ),
 } as const
@@ -150,6 +165,7 @@ const indexes: Record<
       },
     },
   ],
+  contact_messages: [{ key: { status: 1, createdAt: -1 } }],
   volunteer_work: [
     { key: { volunteerId: 1, updatedAt: -1 } },
     { key: { volunteerId: 1, startsAt: 1 } },

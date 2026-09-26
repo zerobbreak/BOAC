@@ -22,6 +22,9 @@ type ApplicationDoc = {
   fullName: string
   email: string
   phone?: string
+  skills?: string
+  availability?: string
+  motivation?: string
   status: ApplicationStatus
   internalNotes?: string
   fileKeys?: string[]
@@ -44,6 +47,9 @@ function toAdmin(doc: ApplicationDoc) {
     fullName: doc.fullName,
     email: doc.email,
     phone: doc.phone ?? null,
+    skills: doc.skills ?? '',
+    availability: doc.availability ?? '',
+    motivation: doc.motivation ?? '',
     status: doc.status,
     internalNotes: doc.internalNotes ?? '',
     files: (doc.fileKeys ?? []).map((_, index) => ({
@@ -53,6 +59,19 @@ function toAdmin(doc: ApplicationDoc) {
     reviewedBy: doc.reviewedBy?.toHexString() ?? null,
     submittedAt: doc.submittedAt,
   }
+}
+
+const answers = ['skills', 'availability', 'motivation'] as const
+
+function answersFrom(body: Record<string, unknown>) {
+  const result: Partial<Record<(typeof answers)[number], string>> = {}
+  for (const key of answers) {
+    const raw = body[key]
+    const value = typeof raw === 'string' ? raw.trim() : ''
+    if (value.length > 2000) throw new Error('Answers can be at most 2000 characters')
+    if (value) result[key] = value
+  }
+  return result
 }
 
 async function filesFrom(body: Record<string, unknown>): Promise<File[]> {
@@ -84,11 +103,13 @@ publicApplications.post('/', async (c) => {
   })
   if (!opportunity) return c.json({ error: 'Opportunity not found' }, 404)
 
+  let extra: ReturnType<typeof answersFrom>
   let images: File[]
   try {
+    extra = answersFrom(body)
     images = await filesFrom(body)
   } catch (error) {
-    return c.json({ error: error instanceof Error ? error.message : 'Invalid image' }, 400)
+    return c.json({ error: error instanceof Error ? error.message : 'Invalid application' }, 400)
   }
 
   const id = new ObjectId()
@@ -110,6 +131,7 @@ publicApplications.post('/', async (c) => {
     opportunityId: opportunity._id,
     fullName,
     email,
+    ...extra,
     status: 'submitted',
     submittedAt: new Date(),
   }

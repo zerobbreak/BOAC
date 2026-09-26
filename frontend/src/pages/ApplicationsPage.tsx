@@ -5,6 +5,10 @@ type Application = {
   id: string
   fullName: string
   email: string
+  phone: string | null
+  skills: string
+  availability: string
+  motivation: string
   status: string
   internalNotes: string
   files: Array<{ index: number; url: string }>
@@ -58,7 +62,9 @@ export function ApplicationsPage() {
         {items.map((item) => (
           <article className="card" key={item.id}>
             <h2>{item.fullName}</h2>
-            <p className="muted">{item.email} · {item.status}</p>
+            <p className="muted">{item.email}{item.phone ? ` · ${item.phone}` : ''} · {item.status}</p>
+            {([['Skills', item.skills], ['Availability', item.availability], ['Why BOAC', item.motivation]] as const).map(([label, value]) =>
+              value ? <p key={label} style={{ whiteSpace: 'pre-wrap' }}><strong>{label}:</strong> {value}</p> : null)}
             <label>
               Note
               <textarea value={notes[item.id] ?? item.internalNotes} onChange={(event) => setNotes({ ...notes, [item.id]: event.target.value })} />

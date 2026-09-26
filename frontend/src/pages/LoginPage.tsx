@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Navigate } from 'react-router-dom'
+import { Link, Navigate } from 'react-router-dom'
 import { authClient } from '../auth'
 
 export function LoginPage() {
@@ -32,6 +32,9 @@ export function LoginPage() {
         </label>
         {error ? <p className="error">{error}</p> : null}
         <button type="submit">Enter</button>
+        <p className="muted">
+          Not signed up yet? <Link to="/volunteer-form">Volunteer with us</Link> or <Link to="/get-involved">see other ways to help</Link>.
+        </p>
       </form>
     </div>
   )

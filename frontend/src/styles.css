@@ -68,8 +68,16 @@ button, .nav a {
   padding: 0.45rem 0.8rem;
   text-decoration: none;
 }
-button.ghost, .nav a.active {
+button.ghost, .nav a.active, .public-nav a.active {
   background: var(--stamp);
+}
+a.button {
+  display: inline-block;
+  background: var(--stamp);
+  color: var(--paper);
+  padding: 0.45rem 0.8rem;
+  margin-top: 0.4rem;
+  text-decoration: none;
 }
 .error { color: var(--stamp); }
 
@@ -87,6 +95,38 @@ button.ghost, .nav a.active {
 }
 .nav nav { display: grid; gap: 0.4rem; }
 .main { padding: 1.6rem; }
+.public-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  padding: 1rem 1.6rem;
+  border-bottom: 1px solid var(--ink);
+}
+.public-nav .mark { text-decoration: none; }
+.public-nav nav { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.public-nav nav a {
+  background: var(--ink);
+  color: var(--paper);
+  padding: 0.45rem 0.8rem;
+  text-decoration: none;
+}
+.public-footer {
+  padding: 1.6rem;
+  border-top: 1px solid var(--ink);
+  margin-top: 2rem;
+}
+.public-footer p { margin: 0.2rem 0; }
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.8rem;
+  margin-top: 1rem;
+}
+.checkbox { display: flex; gap: 0.5rem; align-items: center; }
+.checkbox input { width: auto; }
+.success { color: var(--ink); font-weight: 600; }
 .row {
   display: flex;
   gap: 0.6rem;

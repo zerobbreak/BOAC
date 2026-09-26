@@ -1,126 +1,111 @@
-import { useEffect, useState } from 'react'
+import { useState, type FormEvent } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { api } from '../api'
-import { place, when, type VolunteerDashboard, type WorkItem } from './volunteer'
+
+const subjects = [
+  ['general', 'General Inquiry'],
+  ['volunteer', 'Volunteer'],
+  ['donation', 'Donation'],
+  ['partnership', 'Partnership'],
+] as const
+
+type Subject = (typeof subjects)[number][0]
+
+function subjectFrom(value: string | null): Subject {
+  return subjects.find(([key]) => key === value)?.[0] ?? 'general'
+}
 
 export function ContactPage() {
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    subject: "General Inquiry",
-    message: "",
-  });
+  const [params] = useSearchParams()
+  const blank = { name: '', email: '', phone: '', subject: subjectFrom(params.get('subject')), message: '' }
+  const [form, setForm] = useState(blank)
+  const [error, setError] = useState('')
+  const [sent, setSent] = useState(false)
+  const [sending, setSending] = useState(false)
 
-  function update<K extends keyof typeof form>(key: K, value: typeof form[K]) {
-    setForm({ ...form, [key]: value });
+  function update<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
+    setForm((current) => ({ ...current, [key]: value }))
   }
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    console.log("Contact Form Submitted:", form);
-    alert("Message sent!");
+  async function onSubmit(event: FormEvent) {
+    event.preventDefault()
+    setError('')
+    setSending(true)
+    try {
+      await api('/contact', { method: 'POST', body: JSON.stringify(form) })
+      setSent(true)
+      setForm(blank)
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Message could not be sent')
+    } finally {
+      setSending(false)
+    }
   }
 
   return (
-    <div className="main">
-      <h1 className="mark">Contact Us</h1>
+    <section>
       <p className="eyebrow">Bokwidi Old Age Centre</p>
+      <h1>Contact Us</h1>
 
-      <div className="split" style={{ marginTop: "1.4rem" }}>
-        {/* LEFT SIDE — LOCATION INFO */}
+      <div className="split" style={{ marginTop: '1.4rem' }}>
         <div className="panel">
           <h2>Our Location</h2>
-
           <p><strong>Address:</strong><br />Bokwidi Village, Waterberg District, Limpopo, South Africa</p>
-          <p><strong>Phone:</strong><br />+27 (0)15 123 4567</p>
-          <p><strong>Email:</strong><br />info@bokwidioldagecentre.org.za</p>
+          <p><strong>Phone:</strong><br /><a href="tel:+27151234567">+27 (0)15 123 4567</a></p>
+          <p><strong>Email:</strong><br /><a href="mailto:info@bokwidioldagecentre.org.za">info@bokwidioldagecentre.org.za</a></p>
           <p><strong>Hours:</strong><br />Mon–Fri: 08:00–16:00<br />Weekends: Closed</p>
+          <a
+            className="button"
+            href="https://www.google.com/maps/search/?api=1&query=Bokwidi+Village+Limpopo"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Open in Maps →
+          </a>
+        </div>
 
-          <div style={{ marginTop: "1rem" }}>
-            <img
-              src="/assets/map-bokwidi.png"
-              alt="Map of Bokwidi Village"
-              style={{ width: "100%", border: "1px solid var(--ink)" }}
-            />
+        {sent ? (
+          <div className="panel">
+            <h2>Message sent</h2>
+            <p className="success">Thank you. Our team will reply to your email within a few working days.</p>
+            <button type="button" onClick={() => setSent(false)}>Send another message</button>
           </div>
-        </div>
-
-        {/* RIGHT SIDE — CONTACT FORM */}
-        <form className="panel" onSubmit={handleSubmit}>
-          <h2>Send Us a Message</h2>
-
-          <label>
-            <span>Full Name</span>
-            <input
-              value={form.name}
-              onChange={(e) => update("name", e.target.value)}
-              required
-            />
-          </label>
-
-          <label>
-            <span>Email Address</span>
-            <input
-              type="email"
-              value={form.email}
-              onChange={(e) => update("email", e.target.value)}
-              required
-            />
-          </label>
-
-          <label>
-            <span>Phone Number (Optional)</span>
-            <input
-              value={form.phone}
-              onChange={(e) => update("phone", e.target.value)}
-            />
-          </label>
-
-          <label>
-            <span>Subject</span>
-            <select
-              value={form.subject}
-              onChange={(e) => update("subject", e.target.value)}
-            >
-              <option>General Inquiry</option>
-              <option>Volunteer</option>
-              <option>Donation</option>
-              <option>Partnership</option>
-            </select>
-          </label>
-
-          <label>
-            <span>Message</span>
-            <textarea
-              placeholder="How can we help you today?"
-              value={form.message}
-              onChange={(e) => update("message", e.target.value)}
-              required
-            />
-          </label>
-
-          <button type="submit">Send Message</button>
-        </form>
+        ) : (
+          <form className="panel" onSubmit={(event) => void onSubmit(event)}>
+            <h2>Send Us a Message</h2>
+            <label>
+              Full Name
+              <input maxLength={200} value={form.name} onChange={(event) => update('name', event.target.value)} required />
+            </label>
+            <label>
+              Email Address
+              <input type="email" value={form.email} onChange={(event) => update('email', event.target.value)} required />
+            </label>
+            <label>
+              Phone Number (Optional)
+              <input type="tel" maxLength={40} value={form.phone} onChange={(event) => update('phone', event.target.value)} />
+            </label>
+            <label>
+              Subject
+              <select value={form.subject} onChange={(event) => update('subject', subjectFrom(event.target.value))}>
+                {subjects.map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+              </select>
+            </label>
+            <label>
+              Message
+              <textarea
+                placeholder="How can we help you today?"
+                maxLength={5000}
+                value={form.message}
+                onChange={(event) => update('message', event.target.value)}
+                required
+              />
+            </label>
+            {error ? <p className="error">{error}</p> : null}
+            <button type="submit" disabled={sending}>{sending ? 'Sending…' : 'Send Message'}</button>
+          </form>
+        )}
       </div>
-
-      {/* FOOTER */}
-      <footer style={{ marginTop: "3rem" }}>
-        <p className="muted">
-          Batsofe Tiang Maatla — The elderly guide our strength
-        </p>
-        <p className="muted">Bokwidi Village, Waterberg District, Limpopo</p>
-
-        <div className="row">
-          <a href="/volunteer">Volunteer</a>
-          <a href="/privacy">Privacy Policy</a>
-          <a href="/reports">Annual Reports</a>
-        </div>
-
-        <p className="muted" style={{ marginTop: "1rem" }}>
-          © 2024 Bokwidi Old Age Centre. All rights reserved.<br />
-          Non-Profit Registered
-        </p>
-      </footer>
-    </div>
-  );
+    </section>
+  )
 }
