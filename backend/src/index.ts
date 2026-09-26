@@ -2,6 +2,7 @@ import 'dotenv/config'
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
+import { HTTPException } from 'hono/http-exception'
 import { auth, ensureAdminUser, ensureVolunteerUser, frontendOrigin, requireAdmin, type AppEnv } from './auth.js'
 import { pingBucket } from './bucket.js'
 import { closeDatabase, pingDatabase } from './db.js'
@@ -24,6 +25,13 @@ app.use(
   }),
 )
 
+// Malformed JSON or form bodies surface here; answer in the same { error } shape as the routes.
+app.onError((error, c) => {
+  if (error instanceof HTTPException) return c.json({ error: error.message }, error.status)
+  console.error(error)
+  return c.json({ error: 'Internal server error' }, 500)
+})
+
 app.get('/', (c) => {
   return c.text('Hello Hono!')
 })
@@ -31,21 +39,26 @@ app.get('/', (c) => {
 app.on(['POST', 'GET'], '/api/auth/*', (c) => auth.handler(c.req.raw))
 
 const admin = new Hono<AppEnv>()
-admin.use('*', requireAdmin)
-admin.get('/', (c) => c.json({ ok: true, user: c.get('user') }))
-admin.route('/content', contentRoutes)
-admin.route('/categories', categoryRoutes)
-admin.route('/tags', tagRoutes)
-admin.route('/opportunities', opportunityRoutes)
-admin.route('/applications', applicationRoutes)
-admin.route('/assignments', assignmentRoutes)
-admin.route('/messages', messageRoutes)
-app.route('/admin', admin)
-app.route('/opportunities', publicOpportunities)
-app.route('/applications', publicApplications)
-app.route('/contact', publicContact)
-app.route('/', publicRoutes)
-app.route('/volunteer', volunteer)
+  .use('*', requireAdmin)
+  .get('/', (c) => c.json({ ok: true, user: c.get('user') }))
+  .route('/content', contentRoutes)
+  .route('/categories', categoryRoutes)
+  .route('/tags', tagRoutes)
+  .route('/opportunities', opportunityRoutes)
+  .route('/applications', applicationRoutes)
+  .route('/assignments', assignmentRoutes)
+  .route('/messages', messageRoutes)
+
+// The frontend's typed client is built from this chain, so every API route belongs in it.
+const routes = app
+  .route('/admin', admin)
+  .route('/opportunities', publicOpportunities)
+  .route('/applications', publicApplications)
+  .route('/contact', publicContact)
+  .route('/', publicRoutes)
+  .route('/volunteer', volunteer)
+
+export type AppType = typeof routes
 
 app.get('/health', async (c) => {
   const checks = await Promise.allSettled([pingDatabase(), pingBucket()])

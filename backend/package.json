@@ -11,10 +11,12 @@
     "@aws-sdk/client-s3": "^3.1140.0",
     "@better-auth/mongo-adapter": "^1.7.6",
     "@hono/node-server": "^2.1.1",
+    "@hono/zod-validator": "^0.9.1",
     "better-auth": "^1.7.6",
     "dotenv": "^18.0.3",
     "hono": "^4.13.9",
-    "mongodb": "^7.6.0"
+    "mongodb": "^7.6.0",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@types/node": "^26.1.1",
