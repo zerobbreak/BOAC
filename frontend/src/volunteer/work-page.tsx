@@ -1,45 +1,40 @@
-import { useEffect, useState, type FormEvent } from 'react'
-import { api } from '../api'
-import { place, when, type WorkItem } from './volunteer'
+import { useState, type FormEvent } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { client, errorText, unwrap } from '../lib/api-client'
+import { volunteerKey, workQuery } from './queries'
+import { place, when, type WorkItem } from './format'
 
 const statuses = ['planned', 'in_progress', 'done'] as const
 
-export function VolunteerWorkPage() {
-  const [items, setItems] = useState<WorkItem[]>([])
+type Patch = { status?: WorkItem['status']; hours?: number; notes?: string }
+
+export function WorkPage() {
+  const queryClient = useQueryClient()
+  const { data, error: loadError } = useQuery(workQuery)
   const [title, setTitle] = useState('')
   const [notes, setNotes] = useState('')
-  const [error, setError] = useState('')
 
-  async function load() {
-    const body = await api<{ work: WorkItem[] }>('/volunteer/work')
-    setItems(body.work)
-  }
+  // Work also feeds the Schedule and Spaces pages, so refresh everything under ['volunteer'].
+  const refresh = () => queryClient.invalidateQueries({ queryKey: volunteerKey })
 
-  useEffect(() => {
-    load().catch((reason: unknown) => setError(reason instanceof Error ? reason.message : 'Load failed'))
-  }, [])
-
-  async function create(event: FormEvent) {
-    event.preventDefault()
-    setError('')
-    try {
-      await api('/volunteer/work', { method: 'POST', body: JSON.stringify({ title, notes }) })
+  const create = useMutation({
+    mutationFn: () => unwrap(client.volunteer.work.$post({ json: { title, notes } })),
+    onSuccess: async () => {
       setTitle('')
       setNotes('')
-      await load()
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Could not add work')
-    }
-  }
+      await refresh()
+    },
+  })
+  const save = useMutation({
+    mutationFn: ({ id, patch }: { id: string; patch: Patch }) =>
+      unwrap(client.volunteer.work[':id'].$patch({ param: { id }, json: patch })),
+    onSettled: refresh,
+  })
+  const error = loadError ?? create.error ?? save.error
 
-  async function save(item: WorkItem, patch: { status?: WorkItem['status']; hours?: number; notes?: string }) {
-    setError('')
-    try {
-      await api(`/volunteer/work/${item.id}`, { method: 'PATCH', body: JSON.stringify(patch) })
-      await load()
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Could not save')
-    }
+  function onCreate(event: FormEvent) {
+    event.preventDefault()
+    create.mutate()
   }
 
   return (
@@ -47,9 +42,9 @@ export function VolunteerWorkPage() {
       <div>
         <p className="eyebrow">Record</p>
         <h1>Your work</h1>
-        {error ? <p className="error">{error}</p> : null}
+        {error ? <p className="error">{errorText(error, 'Could not save')}</p> : null}
         <div className="list">
-          {items.map((item) => (
+          {(data?.work ?? []).map((item) => (
             <article className="card" key={item.id}>
               <h2>{item.title}</h2>
               <p className="muted">{when(item.startsAt)} · {place(item)}</p>
@@ -59,7 +54,7 @@ export function VolunteerWorkPage() {
                     key={status}
                     className={item.status === status ? undefined : 'ghost'}
                     type="button"
-                    onClick={() => void save(item, { status })}
+                    onClick={() => save.mutate({ id: item.id, patch: { status } })}
                   >
                     {status.replace('_', ' ')}
                   </button>
@@ -75,7 +70,7 @@ export function VolunteerWorkPage() {
                   onBlur={(event) => {
                     const hours = Number(event.target.value)
                     if (event.target.value !== '' && Number.isFinite(hours) && hours !== item.hours) {
-                      void save(item, { hours })
+                      save.mutate({ id: item.id, patch: { hours } })
                     }
                   }}
                 />
@@ -85,7 +80,7 @@ export function VolunteerWorkPage() {
                 <textarea
                   defaultValue={item.notes}
                   onBlur={(event) => {
-                    if (event.target.value !== item.notes) void save(item, { notes: event.target.value })
+                    if (event.target.value !== item.notes) save.mutate({ id: item.id, patch: { notes: event.target.value } })
                   }}
                 />
               </label>
@@ -93,11 +88,11 @@ export function VolunteerWorkPage() {
           ))}
         </div>
       </div>
-      <form className="panel" onSubmit={(event) => void create(event)}>
+      <form className="panel" onSubmit={onCreate}>
         <h2>Add your own work</h2>
         <label>Title<input value={title} onChange={(event) => setTitle(event.target.value)} required /></label>
         <label>Notes<textarea value={notes} onChange={(event) => setNotes(event.target.value)} /></label>
-        <button type="submit">Add</button>
+        <button type="submit" disabled={create.isPending}>Add</button>
       </form>
     </section>
   )

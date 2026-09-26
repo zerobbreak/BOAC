@@ -9,7 +9,7 @@ const accountDetails = [
   ['Reference', 'Your Name / Org'],
 ] as const
 
-export function DonationPage() {
+export function DonatePage() {
   const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>('idle')
 
   async function copyDetails() {

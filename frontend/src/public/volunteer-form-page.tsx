@@ -1,11 +1,7 @@
-import { useEffect, useState, type FormEvent } from 'react'
-import { api } from '../api'
-
-type Opportunity = {
-  id: string
-  title: string
-  location: string | null
-}
+import { useState, type FormEvent } from 'react'
+import { useMutation, useQuery } from '@tanstack/react-query'
+import { client, errorText, unwrap } from '../lib/api-client'
+import { openOpportunitiesQuery } from './queries'
 
 const blank = {
   firstName: '',
@@ -20,46 +16,33 @@ const blank = {
 }
 
 export function VolunteerFormPage() {
-  const [opportunities, setOpportunities] = useState<Opportunity[] | null>(null)
+  const listing = useQuery(openOpportunitiesQuery)
+  const opportunities = listing.data?.opportunities ?? (listing.isPending ? null : [])
   const [form, setForm] = useState(blank)
-  const [error, setError] = useState('')
-  const [sent, setSent] = useState(false)
-  const [sending, setSending] = useState(false)
 
-  useEffect(() => {
-    api<{ opportunities: Opportunity[] }>('/opportunities')
-      .then((body) => setOpportunities(body.opportunities))
-      .catch((reason: unknown) => {
-        setOpportunities([])
-        setError(reason instanceof Error ? reason.message : 'Could not load opportunities')
-      })
-  }, [])
+  const submit = useMutation({
+    mutationFn: () => unwrap(client.applications.$post({
+      form: {
+        fullName: `${form.firstName.trim()} ${form.lastName.trim()}`,
+        email: form.email,
+        phone: form.phone,
+        opportunityId: form.opportunityId,
+        skills: form.skills,
+        availability: form.availability,
+        motivation: form.motivation,
+      },
+    })),
+    onSuccess: () => setForm(blank),
+  })
+  const error = listing.error ?? submit.error
 
   function update<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
     setForm((current) => ({ ...current, [key]: value }))
   }
 
-  async function onSubmit(event: FormEvent) {
+  function onSubmit(event: FormEvent) {
     event.preventDefault()
-    setError('')
-    setSending(true)
-    const body = new FormData()
-    body.set('fullName', `${form.firstName.trim()} ${form.lastName.trim()}`)
-    body.set('email', form.email)
-    body.set('phone', form.phone)
-    body.set('opportunityId', form.opportunityId)
-    body.set('skills', form.skills)
-    body.set('availability', form.availability)
-    body.set('motivation', form.motivation)
-    try {
-      await api('/applications', { method: 'POST', body })
-      setSent(true)
-      setForm(blank)
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Application could not be sent')
-    } finally {
-      setSending(false)
-    }
+    submit.mutate()
   }
 
   return (
@@ -90,14 +73,14 @@ export function VolunteerFormPage() {
           </div>
         </div>
 
-        {sent ? (
+        {submit.isSuccess ? (
           <div className="panel">
             <h2>Application received</h2>
             <p className="success">Thank you. Our team will review your application and contact you by email.</p>
-            <button type="button" onClick={() => setSent(false)}>Send another application</button>
+            <button type="button" onClick={() => submit.reset()}>Send another application</button>
           </div>
         ) : (
-          <form className="panel" onSubmit={(event) => void onSubmit(event)}>
+          <form className="panel" onSubmit={onSubmit}>
             <h2>Application Form</h2>
             <label>
               First Name
@@ -153,9 +136,9 @@ export function VolunteerFormPage() {
               <input type="checkbox" checked={form.consent} onChange={(event) => update('consent', event.target.checked)} required />
               <span className="muted">I consent to BOAC storing my application data for volunteer coordination.</span>
             </label>
-            {error ? <p className="error">{error}</p> : null}
-            <button type="submit" disabled={sending || !opportunities?.length}>
-              {sending ? 'Sending…' : 'Submit Application ▶'}
+            {error ? <p className="error">{errorText(error, 'Application could not be sent')}</p> : null}
+            <button type="submit" disabled={submit.isPending || !opportunities?.length}>
+              {submit.isPending ? 'Sending…' : 'Submit Application ▶'}
             </button>
           </form>
         )}

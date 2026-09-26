@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
+import { useMutation } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
-import { api } from '../api'
+import { client, errorText, unwrap } from '../lib/api-client'
 
 const subjects = [
   ['general', 'General Inquiry'],
@@ -19,27 +20,18 @@ export function ContactPage() {
   const [params] = useSearchParams()
   const blank = { name: '', email: '', phone: '', subject: subjectFrom(params.get('subject')), message: '' }
   const [form, setForm] = useState(blank)
-  const [error, setError] = useState('')
-  const [sent, setSent] = useState(false)
-  const [sending, setSending] = useState(false)
+  const send = useMutation({
+    mutationFn: () => unwrap(client.contact.$post({ json: form })),
+    onSuccess: () => setForm(blank),
+  })
 
   function update<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
     setForm((current) => ({ ...current, [key]: value }))
   }
 
-  async function onSubmit(event: FormEvent) {
+  function onSubmit(event: FormEvent) {
     event.preventDefault()
-    setError('')
-    setSending(true)
-    try {
-      await api('/contact', { method: 'POST', body: JSON.stringify(form) })
-      setSent(true)
-      setForm(blank)
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Message could not be sent')
-    } finally {
-      setSending(false)
-    }
+    send.mutate()
   }
 
   return (
@@ -64,14 +56,14 @@ export function ContactPage() {
           </a>
         </div>
 
-        {sent ? (
+        {send.isSuccess ? (
           <div className="panel">
             <h2>Message sent</h2>
             <p className="success">Thank you. Our team will reply to your email within a few working days.</p>
-            <button type="button" onClick={() => setSent(false)}>Send another message</button>
+            <button type="button" onClick={() => send.reset()}>Send another message</button>
           </div>
         ) : (
-          <form className="panel" onSubmit={(event) => void onSubmit(event)}>
+          <form className="panel" onSubmit={onSubmit}>
             <h2>Send Us a Message</h2>
             <label>
               Full Name
@@ -101,8 +93,8 @@ export function ContactPage() {
                 required
               />
             </label>
-            {error ? <p className="error">{error}</p> : null}
-            <button type="submit" disabled={sending}>{sending ? 'Sending…' : 'Send Message'}</button>
+            {send.error ? <p className="error">{errorText(send.error, 'Message could not be sent')}</p> : null}
+            <button type="submit" disabled={send.isPending}>{send.isPending ? 'Sending…' : 'Send Message'}</button>
           </form>
         )}
       </div>

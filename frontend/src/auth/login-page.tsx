@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Link, Navigate } from 'react-router-dom'
-import { authClient } from '../auth'
+import { authClient } from '../lib/auth'
 
 export function LoginPage() {
   const { data, isPending } = authClient.useSession()

@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
-import { api } from '../api'
-import { place, when, type VolunteerDashboard, type WorkItem } from './volunteer'
+import { useQuery } from '@tanstack/react-query'
+import { errorText } from '../lib/api-client'
+import { dashboardQuery } from './queries'
+import { place, when, type WorkItem } from './format'
 
 function Shift({ item }: { item: WorkItem }) {
   return (
@@ -12,21 +13,14 @@ function Shift({ item }: { item: WorkItem }) {
   )
 }
 
-export function VolunteerHomePage() {
-  const [desk, setDesk] = useState<VolunteerDashboard | null>(null)
-  const [error, setError] = useState('')
-
-  useEffect(() => {
-    api<VolunteerDashboard>('/volunteer/dashboard')
-      .then(setDesk)
-      .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : 'Load failed'))
-  }, [])
+export function SchedulePage() {
+  const { data: desk, error } = useQuery(dashboardQuery)
 
   return (
     <section>
       <p className="eyebrow">Schedule</p>
       <h1>{desk ? desk.profile.name : 'Your shifts'}</h1>
-      {error ? <p className="error">{error}</p> : null}
+      {error ? <p className="error">{errorText(error, 'Load failed')}</p> : null}
       <h2>Upcoming</h2>
       <div className="list">
         {desk?.schedule.upcoming.length ? desk.schedule.upcoming.map((item) => <Shift key={item.id} item={item} />) : <p className="muted">Nothing scheduled.</p>}
