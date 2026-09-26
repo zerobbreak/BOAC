@@ -10,6 +10,10 @@ import { TaxonomyPage } from './pages/TaxonomyPage'
 import { VolunteerHomePage } from './pages/VolunteerHomePage'
 import { VolunteerSpacesPage } from './pages/VolunteerSpacesPage'
 import { VolunteerWorkPage } from './pages/VolunteerWorkPage'
+import { GetInvolvedPage } from './pages/GetInvolvedPage'
+import { VolunteerFormPage } from './pages/VolunteerFormPage'
+import { DonationPage } from './pages/DonationPage'
+import { ContactPage } from './pages/ContactPage'
 
 const adminLinks = [
   ['/', 'Desk'],
@@ -24,6 +28,10 @@ const volunteerLinks = [
   ['/', 'Schedule'],
   ['/work', 'Work'],
   ['/spaces', 'Spaces'],
+  ['/get-involved', 'Get Involved'],
+  ['/volunteer-form', 'Volunteer Form'],
+  ['/donate', 'Donate'],
+  ['/contact', 'Contact'],
 ] as const
 
 function Shell() {
@@ -75,6 +83,11 @@ function Shell() {
             <Route path="/" element={<VolunteerHomePage />} />
             <Route path="/work" element={<VolunteerWorkPage />} />
             <Route path="/spaces" element={<VolunteerSpacesPage />} />
+            <Route path="/get-involved" element={<GetInvolvedPage />} />
+            <Route path="/volunteer-form" element={<VolunteerFormPage />} />
+            <Route path="/donate" element={<DonationPage />} />
+            <Route path="/contact" element={<ContactPage />} />
+
           </Routes>
         )}
       </main>
@@ -87,6 +100,7 @@ export function App() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/*" element={<Shell />} />
+      
     </Routes>
   )
 }
