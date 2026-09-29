@@ -1,4 +1,3 @@
-```
 # Backend API
 
 This service powers the volunteer platform’s data and auth layer. It exposes the public website APIs, a protected admin API, and a volunteer-only dashboard API backed by MongoDB and S3-compatible object storage.
