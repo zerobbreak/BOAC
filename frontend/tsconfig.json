@@ -12,7 +12,18 @@
     "jsx": "react-jsx",
     "strict": true,
     "noUnusedLocals": true,
-    "noUnusedParameters": true
+    "noUnusedParameters": true,
+
+    "types": ["vitest/globals"],
+    "ignoreDeprecations": "6.0",
+
+    "baseUrl": "src",
+    "paths": {
+      "@/*": ["*"],
+      "@components/*": ["components/*"],
+      "@hooks/*": ["hooks/*"],
+      "@lib/*": ["lib/*"]
+    }
   },
-  "include": ["src"]
+  "include": ["src", "tests", "**/*.test.tsx", "**/*.test.ts"]
 }
