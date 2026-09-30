@@ -1,3 +1,18 @@
+/**
+ *   Description:
+ *   Bootstraps the React application, sets up global providers
+ *   including React Query and React Router, and mounts the App
+ *   component into the root DOM node.
+ *
+ * Notes:
+ *   - Uses StrictMode for highlighting potential issues.
+ *   - QueryClientProvider supplies TanStack Query caching.
+ *   - BrowserRouter enables client-side routing.
+ *   - App contains all public and admin routes.
+ */
+
+
+
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { QueryClientProvider } from '@tanstack/react-query'

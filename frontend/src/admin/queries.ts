@@ -1,3 +1,18 @@
+ /** 
+ * Description:
+ *   Shared React Query configurations used across admin pages.
+ *   These queries ensure consistent caching, stable keys, and
+ *   unified data loading for desk, content, categories, tags,
+ *   opportunities, applications, messages, and volunteers.
+ *
+ * Notes:
+ *   - Uses TanStack React Query's `queryOptions` for typed queries.
+ *   - Uses `client` and `authClient` wrappers for API calls.
+ *   - `unwrap()` normalizes API responses and throws on errors.
+ *   - Queries are intentionally centralized to avoid duplication
+ *     across admin pages.
+*/
+
 import { queryOptions } from '@tanstack/react-query'
 import { client, unwrap } from '../lib/api-client'
 import { authClient } from '../lib/auth'
