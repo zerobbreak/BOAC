@@ -56,6 +56,9 @@ const updateSchema = z.object({
   closingDate: optionalDate('Invalid closing date'),
 })
 
+// Adapted from Hono ([s.a.]a): one Hono instance per resource, routes chained so index.ts mounts it with
+// app.route() and the frontend client infers its types. Bodies are checked with validate() (Hono, [s.a.]b).
+// <https://hono.dev/docs/guides/best-practices> [Accessed 4 October 2026]. Full references in README.md.
 export const publicOpportunities = new Hono().get('/', async (c) => {
   const docs = await getDb()
     .collection<OpportunityDoc>('opportunities')
@@ -97,6 +100,8 @@ export const opportunityRoutes = new Hono<AppEnv>()
     if (body.closingDate) update.closingDate = body.closingDate
     if (Object.keys(update).length === 0) return c.json({ error: 'No changes' }, 400)
     update.updatedAt = new Date()
+    // returnDocument: 'after' makes findOneAndUpdate return the updated document (MongoDB, [s.a.]a).
+    // <https://www.mongodb.com/docs/drivers/node/current/crud/compound-operations/> [Accessed 4 October 2026].
     const doc = await getDb().collection<OpportunityDoc>('opportunities').findOneAndUpdate(
       { _id: c.req.valid('param').id },
       { $set: update },

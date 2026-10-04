@@ -15,6 +15,8 @@ import volunteer from './volunteer-work.js'
 
 const app = new Hono<AppEnv>()
 
+// Adapted from Better Auth ([s.a.]b): CORS with credentials registered before the auth route, origin matching trustedOrigins.
+// <https://www.better-auth.com/docs/integrations/hono> [Accessed 4 October 2026]. Full reference in README.md.
 app.use(
   '*',
   cors({
@@ -36,6 +38,7 @@ app.get('/', (c) => {
   return c.text('Hello Hono!')
 })
 
+// Adapted from Better Auth ([s.a.]b): forwards the raw request to Better Auth (limited to POST and GET here).
 app.on(['POST', 'GET'], '/api/auth/*', (c) => auth.handler(c.req.raw))
 
 const admin = new Hono<AppEnv>()
@@ -50,6 +53,8 @@ const admin = new Hono<AppEnv>()
   .route('/messages', messageRoutes)
 
 // The frontend's typed client is built from this chain, so every API route belongs in it.
+// Adapted from Hono ([s.a.]a): mount each resource's routes with app.route() and export typeof routes as AppType.
+// <https://hono.dev/docs/guides/best-practices> [Accessed 4 October 2026]. Full reference in README.md.
 const routes = app
   .route('/admin', admin)
   .route('/opportunities', publicOpportunities)

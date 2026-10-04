@@ -24,6 +24,9 @@ const assignSchema = z.object({
   startsAt: optionalDate('Invalid start time'),
 })
 
+// Adapted from Hono ([s.a.]a): one Hono instance per resource, routes chained so index.ts mounts it with
+// app.route() and the frontend client infers its types. Bodies are checked with validate() (Hono, [s.a.]b).
+// <https://hono.dev/docs/guides/best-practices> [Accessed 4 October 2026]. Full references in README.md.
 export const assignmentRoutes = new Hono<AppEnv>()
   .use('*', requireAdmin)
   .post('/', validate('json', assignSchema), async (c) => {

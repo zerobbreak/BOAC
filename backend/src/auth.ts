@@ -8,6 +8,12 @@ import { ac, roles } from './permissions.js'
 
 export const frontendOrigin = process.env.FRONTEND_ORIGIN ?? 'http://localhost:5173'
 
+// Better Auth stores users, accounts and sessions in our MongoDB database. Sign-in goes through /api/auth/*
+// (mounted in index.ts) and sets a session cookie. Protected routes then read that cookie through getSession below.
+// Adapted from Better Auth ([s.a.]c): mongodbAdapter(db, { client }) shares our MongoClient for transactions.
+// <https://www.better-auth.com/docs/adapters/mongo> [Accessed 4 October 2026].
+// Adapted from Better Auth ([s.a.]a): admin plugin configured with custom ac and roles.
+// <https://www.better-auth.com/docs/plugins/admin> [Accessed 4 October 2026]. Full references in README.md.
 export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET ?? process.env.JWT_SECRET,
   baseURL: process.env.BETTER_AUTH_URL ?? `http://localhost:${process.env.PORT ?? 3000}`,
@@ -45,6 +51,8 @@ function hasRole(role: unknown, expected: string): boolean {
   return false
 }
 
+// Adapted from Better Auth ([s.a.]b): Hono middleware that loads the session from request headers and stores it with c.set.
+// <https://www.better-auth.com/docs/integrations/hono> [Accessed 4 October 2026]. Full reference in README.md.
 function requireRole(expected: 'admin' | 'volunteer') {
   return createMiddleware<AppEnv>(async (c, next) => {
     const session = await auth.api.getSession({ headers: c.req.raw.headers })
@@ -69,6 +77,7 @@ export function staffRole(role: unknown): StaffRole {
   return 'user'
 }
 
+// Session check as above (Better Auth, [s.a.]b), then a role check with auth.api.userHasPermission (Better Auth, [s.a.]a).
 export function requireStaff(action: 'manage_content' | 'publish_content') {
   return createMiddleware<AppEnv>(async (c, next) => {
     const session = await auth.api.getSession({ headers: c.req.raw.headers })

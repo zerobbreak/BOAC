@@ -179,6 +179,8 @@ const seedRoles: Array<{ name: string; permissions: Permission[] }> = [
   { name: 'volunteer', permissions: ['track_work'] },
 ]
 
+// Adapted from MongoDB ([s.a.]c): $jsonSchema validator on createCollection, and collMod for existing collections.
+// <https://www.mongodb.com/docs/manual/core/schema-validation/specify-json-schema/> [Accessed 4 October 2026]. Full reference in README.md.
 async function ensureCollection(db: Db, name: CollectionName): Promise<void> {
   const validator = validators[name]
   const exists = await db.listCollections({ name }).hasNext()
@@ -200,6 +202,8 @@ async function ensureCollection(db: Db, name: CollectionName): Promise<void> {
     })
   }
 
+  // Unique and unique partial indexes, e.g. one open application per email and opportunity (MongoDB, [s.a.]d).
+  // <https://www.mongodb.com/docs/manual/core/index-unique/> [Accessed 4 October 2026]. Full reference in README.md.
   for (const index of indexes[name]) {
     await db.collection(name).createIndex(index.key, {
       unique: index.unique ?? false,

@@ -3,6 +3,8 @@ import type { ValidationTargets } from 'hono'
 import { ObjectId } from 'mongodb'
 import { z } from 'zod'
 
+// Adapted from Hono ([s.a.]b): zValidator hook (result, c) that returns a custom error response.
+// <https://github.com/honojs/middleware/tree/main/packages/zod-validator> [Accessed 4 October 2026]. Full reference in README.md.
 // Every failed check answers { error: '<first message>' }, the shape the frontend already reads.
 export function validate<Target extends keyof ValidationTargets, T extends z.ZodType>(target: Target, schema: T) {
   return zValidator(target, schema, (result, c) => {

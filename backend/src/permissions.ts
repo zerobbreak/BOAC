@@ -1,6 +1,8 @@
 import { createAccessControl } from 'better-auth/plugins/access'
 import { adminAc, defaultStatements } from 'better-auth/plugins/admin/access'
 
+// Adapted from Better Auth ([s.a.]a): custom access control that keeps the admin plugin's default statements.
+// <https://www.better-auth.com/docs/plugins/admin> [Accessed 4 October 2026]. Full reference in README.md.
 const statement = {
   ...defaultStatements,
   staff: [

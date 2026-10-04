@@ -85,6 +85,9 @@ const applicationForm = z.object({
   image: images,
 })
 
+// Adapted from Hono ([s.a.]a): one Hono instance per resource, routes chained so index.ts mounts it with
+// app.route() and the frontend client infers its types. Bodies are checked with validate() (Hono, [s.a.]b).
+// <https://hono.dev/docs/guides/best-practices> [Accessed 4 October 2026]. Full references in README.md.
 export const publicApplications = new Hono().post('/', validate('form', applicationForm), async (c) => {
   const body = c.req.valid('form')
   const opportunity = await getDb().collection<OpportunityDoc>('opportunities').findOne({
@@ -129,6 +132,8 @@ export const publicApplications = new Hono().post('/', validate('form', applicat
     await getDb().collection<ApplicationDoc>('volunteer_applications').insertOne(doc)
   } catch (error) {
     await Promise.all(fileKeys.map((key) => deleteObject(key).catch(() => undefined)))
+    // The unique partial index on open applications rejects a second one (MongoDB, [s.a.]d); 11000 is the duplicate key code.
+    // <https://www.mongodb.com/docs/manual/core/index-unique/> [Accessed 4 October 2026].
     if (error instanceof MongoServerError && error.code === 11000) {
       return c.json({ error: 'An application for this opportunity is already open' }, 409)
     }
@@ -220,6 +225,8 @@ export const applicationRoutes = new Hono<AppEnv>()
       reviewedBy: new ObjectId(c.get('user').id),
     }
     if (notes !== undefined) update.internalNotes = notes
+    // returnDocument: 'after' makes findOneAndUpdate return the updated document (MongoDB, [s.a.]a).
+    // <https://www.mongodb.com/docs/drivers/node/current/crud/compound-operations/> [Accessed 4 October 2026].
     const doc = await getDb().collection<ApplicationDoc>('volunteer_applications').findOneAndUpdate(
       { _id: existing._id, status: existing.status },
       { $set: update },

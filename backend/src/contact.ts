@@ -42,6 +42,9 @@ const messageSchema = z.object({
 
 const statusSchema = z.object({ status: z.enum(['new', 'handled'], { error: 'Invalid status' }) })
 
+// Adapted from Hono ([s.a.]a): one Hono instance per resource, routes chained so index.ts mounts it with
+// app.route() and the frontend client infers its types. Bodies are checked with validate() (Hono, [s.a.]b).
+// <https://hono.dev/docs/guides/best-practices> [Accessed 4 October 2026]. Full references in README.md.
 export const publicContact = new Hono().post('/', validate('json', messageSchema), async (c) => {
   const body = c.req.valid('json')
   const doc: MessageDoc = {
@@ -69,6 +72,8 @@ export const messageRoutes = new Hono<AppEnv>()
     return c.json({ messages: docs.map(toAdmin) })
   })
   .patch('/:id', idParam, validate('json', statusSchema), async (c) => {
+    // returnDocument: 'after' makes findOneAndUpdate return the updated document (MongoDB, [s.a.]a).
+    // <https://www.mongodb.com/docs/drivers/node/current/crud/compound-operations/> [Accessed 4 October 2026].
     const doc = await getDb().collection<MessageDoc>('contact_messages').findOneAndUpdate(
       { _id: c.req.valid('param').id },
       { $set: { status: c.req.valid('json').status } },

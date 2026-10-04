@@ -3,6 +3,8 @@ import { Hono } from 'hono'
 import { ObjectId } from 'mongodb'
 import { email, objectId, optionalDate, required, validate } from './validate.js'
 
+// Adapted from Vitest ([s.a.]): vi.hoisted creates the mocks that the vi.mock factories below use.
+// <https://vitest.dev/api/vi.html> [Accessed 4 October 2026]. Full reference in README.md.
 const mockAuth = vi.hoisted(() => ({
   getSession: vi.fn(),
   userHasPermission: vi.fn(),

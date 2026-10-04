@@ -83,6 +83,9 @@ const updateSchema = z
   })
   .refine((body) => Object.values(body).some((value) => value !== undefined), 'Title, status, notes, or hours is required')
 
+// Adapted from Hono ([s.a.]a): one Hono instance per resource, routes chained so index.ts mounts it with
+// app.route() and the frontend client infers its types. Bodies are checked with validate() (Hono, [s.a.]b).
+// <https://hono.dev/docs/guides/best-practices> [Accessed 4 October 2026]. Full references in README.md.
 const volunteer = new Hono<AppEnv>()
   .use('*', requireVolunteer)
   .get('/dashboard', async (c) => {
@@ -144,6 +147,8 @@ const volunteer = new Hono<AppEnv>()
     if (body.notes !== undefined) update.notes = body.notes
     if (body.hours !== undefined) update.hours = body.hours
     update.updatedAt = new Date()
+    // returnDocument: 'after' makes findOneAndUpdate return the updated document (MongoDB, [s.a.]a).
+    // <https://www.mongodb.com/docs/drivers/node/current/crud/compound-operations/> [Accessed 4 October 2026].
     const result = await getDb().collection<WorkDoc>('volunteer_work').findOneAndUpdate(
       { _id: c.req.valid('param').id, volunteerId: new ObjectId(c.get('user').id) },
       { $set: update },

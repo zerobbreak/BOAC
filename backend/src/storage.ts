@@ -3,6 +3,9 @@ import { getBucket, getBucketName } from './bucket.js'
 
 const MAX_BYTES = 5 * 1024 * 1024
 
+// Checks the file's magic bytes rather than trusting its name or MIME type: JPEG FF D8 FF, PNG 89 50 4E 47,
+// WebP "RIFF" + "WEBP" at offset 8 (Wikipedia, 2026).
+// <https://en.wikipedia.org/wiki/List_of_file_signatures> [Accessed 4 October 2026]. Full reference in README.md.
 export function imageType(bytes: Uint8Array): string | undefined {
   if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return 'image/jpeg'
   if (
@@ -39,6 +42,8 @@ export async function readImage(file: unknown): Promise<{ bytes: Uint8Array; typ
   return { bytes, type }
 }
 
+// Adapted from Amazon Web Services ([s.a.]a): PutObject, DeleteObject and GetObject commands; Body.transformToByteArray.
+// <https://docs.aws.amazon.com/sdk-for-javascript/v3/developer-guide/javascript_s3_code_examples.html> [Accessed 4 October 2026].
 export async function putObject(key: string, bytes: Uint8Array, type: string): Promise<void> {
   await getBucket().send(
     new PutObjectCommand({

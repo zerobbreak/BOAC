@@ -129,3 +129,29 @@ All routes under `/volunteer/*` require an authenticated volunteer user.
 2. Run the backend with `npm run dev`.
 3. Sign in through the Better Auth flows exposed under `/api/auth/*`.
 4. Use the admin and volunteer routes to manage content, review applications, and track assignments.
+
+## How the database and auth work
+
+**MongoDB connection.** `src/db.ts` creates one `MongoClient` the first time any code calls `getDb()`, and every request after that reuses it. A `MongoClient` is a pool of connections, so most applications need only one instance, even across many requests (MongoDB, [s.a.]b). The driver connects on the first query, and the pool hands each request a connection. For example, when a visitor opens the opportunities page, the frontend calls `GET /opportunities` and the route runs `getDb().collection(...).find(...)` on a pooled connection. `/health` sends the driver's `ping` command, and shutdown calls `client.close()` (MongoDB, [s.a.]b). `npm run db:setup` applies a `$jsonSchema` validator to each collection: `createCollection` for new collections, `collMod` for existing ones (MongoDB, [s.a.]c).
+
+**Auth.** Better Auth stores users, accounts and sessions in the same database through its MongoDB adapter. The adapter is given our shared client so it can use transactions (Better Auth, [s.a.]c). Sign-in requests to `/api/auth/*` are forwarded to Better Auth, which sets a session cookie. CORS allows credentials only from `FRONTEND_ORIGIN`, the same origin Better Auth trusts (Better Auth, [s.a.]b). Protected routes use Hono middleware that calls `auth.api.getSession` with the request headers. It answers `401` when there is no session, then checks the user's role and answers `403` if it does not match (Better Auth, [s.a.]b). Roles and their permissions are defined with the admin plugin's access control, and `requireStaff` checks them with `auth.api.userHasPermission` (Better Auth, [s.a.]a).
+
+**Routes.** Each resource (applications, assignments, contact, content, opportunities, volunteer work) has its own Hono instance in its own file. `index.ts` mounts these with `app.route()`, and the chained result is exported as `AppType` for the frontend's typed client (Hono, [s.a.]a). Updates use `findOneAndUpdate` with `returnDocument: 'after'`, so the response contains the saved document (MongoDB, [s.a.]a). Unique and unique partial indexes block duplicate records, such as a second open application for the same opportunity. The application route turns that duplicate key error into a `409` (MongoDB, [s.a.]d).
+
+**Requests and files.** Request bodies, queries and route params are validated with Zod via `@hono/zod-validator`, whose hook turns a failed check into `{ error }` (Hono, [s.a.]b). Uploaded images are identified by their magic bytes, not by their file name (Wikipedia, 2026), and are stored with the AWS SDK's S3 commands (Amazon Web Services, [s.a.]a). The SDK's default checksums are switched to `WHEN_REQUIRED` because the S3-compatible bucket rejects them (Amazon Web Services, [s.a.]b). Tests mock the database and auth with `vi.hoisted` and `vi.mock` (Vitest, [s.a.]).
+
+## References
+
+- Amazon Web Services, [s.a.]a. *Amazon S3 examples using SDK for JavaScript (v3)*. [online] Available at: <https://docs.aws.amazon.com/sdk-for-javascript/v3/developer-guide/javascript_s3_code_examples.html> [Accessed 4 October 2026].
+- Amazon Web Services, [s.a.]b. *Data integrity protections for Amazon S3*. [online] Available at: <https://docs.aws.amazon.com/sdkref/latest/guide/feature-dataintegrity.html> [Accessed 4 October 2026].
+- Better Auth, [s.a.]a. *Admin*. [online] Available at: <https://www.better-auth.com/docs/plugins/admin> [Accessed 4 October 2026].
+- Better Auth, [s.a.]b. *Hono integration*. [online] Available at: <https://www.better-auth.com/docs/integrations/hono> [Accessed 4 October 2026].
+- Better Auth, [s.a.]c. *MongoDB adapter*. [online] Available at: <https://www.better-auth.com/docs/adapters/mongo> [Accessed 4 October 2026].
+- Hono, [s.a.]a. *Best practices*. [online] Available at: <https://hono.dev/docs/guides/best-practices> [Accessed 4 October 2026].
+- Hono, [s.a.]b. *Zod validator middleware for Hono* [Source code] Available at: <https://github.com/honojs/middleware/tree/main/packages/zod-validator> [Accessed 4 October 2026].
+- MongoDB, [s.a.]a. *Compound operations*. [online] Available at: <https://www.mongodb.com/docs/drivers/node/current/crud/compound-operations/> [Accessed 4 October 2026].
+- MongoDB, [s.a.]b. *Create a MongoClient*. [online] Available at: <https://www.mongodb.com/docs/drivers/node/current/connect/mongoclient/> [Accessed 4 October 2026].
+- MongoDB, [s.a.]c. *Specify JSON schema validation*. [online] Available at: <https://www.mongodb.com/docs/manual/core/schema-validation/specify-json-schema/> [Accessed 4 October 2026].
+- MongoDB, [s.a.]d. *Unique indexes*. [online] Available at: <https://www.mongodb.com/docs/manual/core/index-unique/> [Accessed 4 October 2026].
+- Vitest, [s.a.]. *Vi*. [online] Available at: <https://vitest.dev/api/vi.html> [Accessed 4 October 2026].
+- Wikipedia, 2026. *List of file signatures*. [online] Available at: <https://en.wikipedia.org/wiki/List_of_file_signatures> [Accessed 4 October 2026].

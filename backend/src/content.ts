@@ -111,6 +111,9 @@ const coverForm = z.object({
 })
 const nameSchema = z.object({ name: required('Name is required') })
 
+// Adapted from Hono ([s.a.]a): one Hono instance per resource, routes chained so index.ts mounts it with
+// app.route() and the frontend client infers its types. Bodies are checked with validate() (Hono, [s.a.]b).
+// <https://hono.dev/docs/guides/best-practices> [Accessed 4 October 2026]. Full references in README.md.
 const names = new Hono()
   .get('/categories', async (c) => {
     const docs = await getDb().collection<NameDoc>('categories').find().sort({ name: 1 }).toArray()
@@ -176,6 +179,8 @@ function nameRoutes<Collection extends 'categories' | 'tags', Label extends stri
     .patch('/:id', idParam, validate('json', nameSchema), async (c) => {
       const { name } = c.req.valid('json')
       try {
+        // returnDocument: 'after' makes findOneAndUpdate return the updated document (MongoDB, [s.a.]a).
+        // <https://www.mongodb.com/docs/drivers/node/current/crud/compound-operations/> [Accessed 4 October 2026].
         const doc = await getDb().collection<NameDoc>(collection).findOneAndUpdate(
           { _id: c.req.valid('param').id },
           { $set: { name } },
