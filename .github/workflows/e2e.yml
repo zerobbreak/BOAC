@@ -1,17 +1,34 @@
 name: E2E Tests
 
-on: [push]
+on: [push, workflow_dispatch]
 
 jobs:
   e2e:
     runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    # Runs against the deployed Railway site. The tests only read data; desk tests skip unless the account secrets are set.
+    env:
+      E2E_BASE_URL: ${{ vars.E2E_BASE_URL || 'https://web-production-33d51.up.railway.app' }}
+      E2E_API_URL: ${{ vars.E2E_API_URL || 'https://web-production-33d51.up.railway.app/_api' }}
+      E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
+      E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
+      E2E_VOLUNTEER_EMAIL: ${{ secrets.E2E_VOLUNTEER_EMAIL }}
+      E2E_VOLUNTEER_PASSWORD: ${{ secrets.E2E_VOLUNTEER_PASSWORD }}
+
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
 
-      - run: npm install
-      - run: npx playwright install --with-deps
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
 
-      - run: npm run dev & npx playwright test
