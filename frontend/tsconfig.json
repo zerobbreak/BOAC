@@ -14,8 +14,7 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
 
-    "types": ["vitest/globals"],
-    "ignoreDeprecations": "6.0",
+    "types": ["vitest/globals", "node"],
 
     "baseUrl": "src",
     "paths": {
