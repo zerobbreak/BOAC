@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import { MongoClient, type Db } from 'mongodb'
 
 // MongoDB client for backend

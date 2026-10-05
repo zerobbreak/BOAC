@@ -66,12 +66,20 @@ const routes = app
 export type AppType = typeof routes
 
 app.get('/health', async (c) => {
-  const checks = await Promise.allSettled([pingDatabase(), pingBucket()])
+  //for postman testing, you can force a db or bucket failure by sending the header x-force-db-fail or x-force-bucket-fail with value 'true'
+  const forceDbFail = c.req.header('x-force-db-fail') === 'true'
+  const forceBucketFail = c.req.header('x-force-bucket-fail') === 'true'
+
+  const checks = await Promise.allSettled([
+    forceDbFail ? Promise.reject("forced db fail") : pingDatabase(),
+    forceBucketFail ? Promise.reject("forced bucket fail") : pingBucket()
+  ])
+
   const database = checks[0].status === 'fulfilled'
   const bucket = checks[1].status === 'fulfilled'
+
   return c.json({ database, bucket }, database && bucket ? 200 : 503)
 })
-
 const port = Number(process.env.PORT) || 3000
 
 const server = serve({

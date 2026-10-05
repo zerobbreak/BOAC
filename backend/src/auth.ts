@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import { randomBytes } from 'node:crypto'
 import { betterAuth } from 'better-auth'
 import { mongodbAdapter } from '@better-auth/mongo-adapter'
