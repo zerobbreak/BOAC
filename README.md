@@ -121,7 +121,3 @@ npm run preview
 ## Project status
 
 This codebase is a work-in-progress volunteer platform with a public site, protected staff areas, and a backend API suitable for integration with MongoDB and storage-backed media workflows.
-
-## Legacy Static Website
-
-The original static HTML version of the BOAC site is kept in [legacy-static-site/](legacy-static-site/) for reference. It is not part of the build; the live public site is the React app in `frontend/src/public/`.
