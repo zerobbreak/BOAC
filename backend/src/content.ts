@@ -8,8 +8,11 @@ import { idParam, objectId, required, validate } from './validate.js'
 
 const types = ['post', 'article'] as const
 const statuses = ['draft', 'published'] as const
+// Where a published post shows: 'news' is the News page only, 'home' is the News page plus the homepage.
+const placements = ['news', 'home'] as const
 type ContentType = (typeof types)[number]
 type ContentStatus = (typeof statuses)[number]
+type Placement = (typeof placements)[number]
 
 type ContentDoc = {
   _id: ObjectId
@@ -20,6 +23,8 @@ type ContentDoc = {
   authorId: ObjectId
   categoryId?: ObjectId
   tagIds?: ObjectId[]
+  // Only stored for 'home'; posts without it are News-only, so older posts need no migration.
+  placement?: Placement
   coverKey?: string
   createdAt: Date
   updatedAt: Date
@@ -42,6 +47,7 @@ function toContent(doc: ContentDoc, audience: 'public' | 'admin' = 'public') {
     title: doc.title,
     body: doc.body,
     status: doc.status,
+    placement: doc.placement ?? 'news',
     authorId: doc.authorId.toHexString(),
     categoryId: doc.categoryId?.toHexString() ?? null,
     tagIds: (doc.tagIds ?? []).map((tagId) => tagId.toHexString()),
@@ -76,6 +82,7 @@ async function tagsExist(tagIds: ObjectId[]): Promise<boolean> {
 
 const type = z.enum(types, { error: 'Invalid type' })
 const status = z.enum(statuses, { error: 'Invalid status' })
+const placement = z.enum(placements, { error: 'Invalid placement' })
 
 // An empty id in a query or body means "no filter" or "no category".
 const optionalId = z
@@ -87,13 +94,14 @@ const tagIds = z
   .transform((ids) => [...new Set(ids.map((id) => id.toHexString()))].map((id) => new ObjectId(id)))
   .optional()
 
-const publicQuery = z.object({ type: type.optional(), categoryId: optionalId, tagId: optionalId })
+const publicQuery = z.object({ type: type.optional(), categoryId: optionalId, tagId: optionalId, placement: placement.optional() })
 const adminQuery = z.object({ status: status.optional(), type: type.optional() })
 const createSchema = z.object({
   title: required('Title is required'),
   type: type.default('post'),
   body: z.string().default(''),
   status: status.default('draft'),
+  placement: placement.default('news'),
   categoryId: optionalId,
   tagIds,
 })
@@ -102,6 +110,7 @@ const updateSchema = z.object({
   type: type.optional(),
   body: z.string().optional(),
   status: status.optional(),
+  placement: placement.optional(),
   categoryId: optionalId,
   tagIds,
 })
@@ -131,6 +140,8 @@ const publicContent = new Hono()
     if (query.type) filter.type = query.type
     if (query.categoryId) filter.categoryId = query.categoryId
     if (query.tagId) filter.tagIds = query.tagId
+    // Every post is on the News page, so only 'home' narrows the list.
+    if (query.placement === 'home') filter.placement = 'home'
     const docs = await getDb()
       .collection<ContentDoc>('content')
       .find(filter)
@@ -196,8 +207,13 @@ function nameRoutes<Collection extends 'categories' | 'tags', Label extends stri
       }
     })
     .delete('/:id', idParam, async (c) => {
-      const result = await getDb().collection(collection).deleteOne({ _id: c.req.valid('param').id })
+      const id = c.req.valid('param').id
+      const result = await getDb().collection(collection).deleteOne({ _id: id })
       if (result.deletedCount === 0) return c.json({ error: 'Not found' }, 404)
+      // Drop the reference from posts too, or they fail validation the next time they are saved.
+      const content = getDb().collection<ContentDoc>('content')
+      if (collection === 'categories') await content.updateMany({ categoryId: id }, { $unset: { categoryId: '' } })
+      else await content.updateMany({ tagIds: id }, { $pull: { tagIds: id } })
       return c.json({ ok: true })
     })
 }
@@ -236,6 +252,7 @@ const dashboard = new Hono<AppEnv>()
     }
     if (body.categoryId) doc.categoryId = body.categoryId
     if (body.tagIds) doc.tagIds = body.tagIds
+    if (body.placement === 'home') doc.placement = 'home'
     await getDb().collection<ContentDoc>('content').insertOne(doc)
     return c.json({ content: toContent(doc, 'admin') }, 201)
   })
@@ -257,12 +274,17 @@ const dashboard = new Hono<AppEnv>()
       if (!(await tagsExist(body.tagIds))) return c.json({ error: 'Tag not found' }, 400)
       update.tagIds = body.tagIds
     }
+    if (body.placement === 'home') update.placement = 'home'
     const clearCategory = body.categoryId === null || body.categoryId === ''
-    if (Object.keys(update).length === 0 && !clearCategory) return c.json({ error: 'No changes' }, 400)
+    const clearPlacement = body.placement === 'news'
+    if (Object.keys(update).length === 0 && !clearCategory && !clearPlacement) return c.json({ error: 'No changes' }, 400)
 
     update.updatedAt = new Date()
+    const unset: Record<string, ''> = {}
+    if (clearCategory) unset.categoryId = ''
+    if (clearPlacement) unset.placement = ''
     const operators: { $set: Partial<ContentDoc>; $unset?: Record<string, ''> } = { $set: update }
-    if (clearCategory) operators.$unset = { categoryId: '' }
+    if (Object.keys(unset).length) operators.$unset = unset
     const doc = await getDb().collection<ContentDoc>('content').findOneAndUpdate(
       { _id: c.req.valid('param').id },
       operators,

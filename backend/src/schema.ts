@@ -62,6 +62,7 @@ export const validators = {
       title: { bsonType: 'string', minLength: 1 },
       body: { bsonType: 'string' },
       status: { enum: ['draft', 'published'] },
+      placement: { enum: ['news', 'home'] },
       authorId: objectId,
       categoryId: objectId,
       tagIds: {
@@ -150,6 +151,7 @@ const indexes: Record<
   content: [
     { key: { status: 1, type: 1 } },
     { key: { status: 1, categoryId: 1 } },
+    { key: { status: 1, placement: 1 } },
     { key: { tagIds: 1 } },
     { key: { authorId: 1 } },
   ],

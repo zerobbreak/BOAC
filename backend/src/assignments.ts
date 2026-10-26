@@ -18,6 +18,16 @@ type OpportunityDoc = {
   location?: string
 }
 
+type WorkDoc = {
+  _id: ObjectId
+  volunteerId: ObjectId
+  title: string
+  status: 'planned' | 'in_progress' | 'done'
+  opportunityId?: ObjectId
+  startsAt?: Date
+  hours?: number
+}
+
 const assignSchema = z.object({
   volunteerId: objectId('Volunteer and opportunity are required'),
   opportunityId: objectId('Volunteer and opportunity are required'),
@@ -29,6 +39,40 @@ const assignSchema = z.object({
 // <https://hono.dev/docs/guides/best-practices> [Accessed 4 October 2026]. Full references in README.md.
 export const assignmentRoutes = new Hono<AppEnv>()
   .use('*', requireAdmin)
+  // Every volunteer's work with names and places filled in, soonest first; work with no start time goes last.
+  .get('/', async (c) => {
+    const docs = await getDb().collection<WorkDoc>('volunteer_work').find().toArray()
+    const [people, opportunities] = await Promise.all([
+      getDb().collection<UserDoc>('user').find({ _id: { $in: [...new Set(docs.map((doc) => doc.volunteerId))] } }).toArray(),
+      getDb().collection<OpportunityDoc>('opportunities')
+        .find({ _id: { $in: docs.flatMap((doc) => (doc.opportunityId ? [doc.opportunityId] : [])) } })
+        .toArray(),
+    ])
+    const personById = new Map(people.map((person) => [person._id.toHexString(), person]))
+    const opportunityById = new Map(opportunities.map((item) => [item._id.toHexString(), item]))
+    const assignments = docs
+      .map((doc) => {
+        const person = personById.get(doc.volunteerId.toHexString())
+        const opportunity = doc.opportunityId ? opportunityById.get(doc.opportunityId.toHexString()) : undefined
+        return {
+          id: doc._id.toHexString(),
+          volunteerId: doc.volunteerId.toHexString(),
+          volunteerName: person?.name ?? 'Former volunteer',
+          title: doc.title,
+          status: doc.status,
+          opportunityId: doc.opportunityId?.toHexString() ?? null,
+          location: opportunity?.location ?? null,
+          startsAt: doc.startsAt ?? null,
+          hours: doc.hours ?? null,
+        }
+      })
+      .sort((a, b) => {
+        if (!a.startsAt) return 1
+        if (!b.startsAt) return -1
+        return a.startsAt.getTime() - b.startsAt.getTime()
+      })
+    return c.json({ assignments })
+  })
   .post('/', validate('json', assignSchema), async (c) => {
     const { volunteerId, opportunityId, startsAt } = c.req.valid('json')
     const volunteer = await getDb().collection<UserDoc>('user').findOne({ _id: volunteerId })

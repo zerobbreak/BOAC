@@ -5,6 +5,7 @@ import { volunteerKey, workQuery } from './queries'
 import { place, when, type WorkItem } from './format'
 
 const statuses = ['planned', 'in_progress', 'done'] as const
+const statusLabel = { planned: 'Planned', in_progress: 'Doing it', done: 'Done' } as const
 
 type Patch = { status?: WorkItem['status']; hours?: number; notes?: string }
 
@@ -41,25 +42,30 @@ export function WorkPage() {
     <section className="split">
       <div>
         <p className="eyebrow">Record</p>
-        <h1>Your work</h1>
+        <h1>My work</h1>
+        <p className="muted page-intro">Mark how each shift went and how long you stayed. Changes save when you leave a box.</p>
         {error ? <p className="error">{errorText(error, 'Could not save')}</p> : null}
         <div className="list">
           {(data?.work ?? []).map((item) => (
             <article className="card" key={item.id}>
               <h2>{item.title}</h2>
               <p className="muted">{when(item.startsAt)} · {place(item)}</p>
-              <div className="row">
-                {statuses.map((status) => (
-                  <button
-                    key={status}
-                    className={item.status === status ? undefined : 'ghost'}
-                    type="button"
-                    onClick={() => save.mutate({ id: item.id, patch: { status } })}
-                  >
-                    {status.replace('_', ' ')}
-                  </button>
-                ))}
-              </div>
+              <fieldset>
+                <legend>How is it going?</legend>
+                <div className="segmented">
+                  {statuses.map((status) => (
+                    <label key={status}>
+                      <input
+                        type="radio"
+                        name={`status-${item.id}`}
+                        checked={item.status === status}
+                        onChange={() => save.mutate({ id: item.id, patch: { status } })}
+                      />
+                      <span>{statusLabel[status]}</span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
               <label>
                 Hours
                 <input
@@ -76,7 +82,7 @@ export function WorkPage() {
                 />
               </label>
               <label>
-                Notes
+                Notes for staff
                 <textarea
                   defaultValue={item.notes}
                   onBlur={(event) => {
@@ -89,10 +95,11 @@ export function WorkPage() {
         </div>
       </div>
       <form className="panel" onSubmit={onCreate}>
-        <h2>Add your own work</h2>
-        <label>Title<input value={title} onChange={(event) => setTitle(event.target.value)} required /></label>
+        <h2>Did something extra?</h2>
+        <p className="muted">Log help that wasn't on your schedule, like fixing a gate or driving someone home.</p>
+        <label>What did you do?<input value={title} onChange={(event) => setTitle(event.target.value)} required /></label>
         <label>Notes<textarea value={notes} onChange={(event) => setNotes(event.target.value)} /></label>
-        <button type="submit" disabled={create.isPending}>Add</button>
+        <button type="submit" disabled={create.isPending}>Add to my work</button>
       </form>
     </section>
   )

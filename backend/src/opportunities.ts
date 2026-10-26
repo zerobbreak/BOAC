@@ -48,13 +48,25 @@ const createSchema = z.object({
   closingDate: optionalDate('Invalid closing date'),
 })
 
+// Unlike optionalDate, null or '' here means "remove the closing date", so it is kept apart from "not sent".
+const closingDateUpdate = z
+  .union([z.null(), z.literal(''), z.string().refine((value) => !Number.isNaN(Date.parse(value)))], { error: 'Invalid closing date' })
+  .optional()
+  .transform((value) => (value === undefined ? undefined : value ? new Date(value) : null))
+
 const updateSchema = z.object({
   title: required('Title is required').optional(),
   status: status.optional(),
   public: z.boolean({ error: 'Invalid public flag' }).optional(),
   location: z.string().trim().optional(),
-  closingDate: optionalDate('Invalid closing date'),
+  closingDate: closingDateUpdate,
 })
+
+// A closing date is the last day an opportunity is offered; from the next day it drops off the public list.
+function startOfToday() {
+  const now = new Date()
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
+}
 
 // Adapted from Hono ([s.a.]a): one Hono instance per resource, routes chained so index.ts mounts it with
 // app.route() and the frontend client infers its types. Bodies are checked with validate() (Hono, [s.a.]b).
@@ -62,7 +74,11 @@ const updateSchema = z.object({
 export const publicOpportunities = new Hono().get('/', async (c) => {
   const docs = await getDb()
     .collection<OpportunityDoc>('opportunities')
-    .find({ public: true, status: 'open' })
+    .find({
+      public: true,
+      status: 'open',
+      $or: [{ closingDate: { $exists: false } }, { closingDate: { $gte: startOfToday() } }],
+    })
     .sort({ createdAt: -1 })
     .toArray()
   return c.json({ opportunities: docs.map(toPublic) })
@@ -98,13 +114,14 @@ export const opportunityRoutes = new Hono<AppEnv>()
     if (body.public !== undefined) update.public = body.public
     if (body.location !== undefined) update.location = body.location
     if (body.closingDate) update.closingDate = body.closingDate
-    if (Object.keys(update).length === 0) return c.json({ error: 'No changes' }, 400)
+    const clearClosingDate = body.closingDate === null
+    if (Object.keys(update).length === 0 && !clearClosingDate) return c.json({ error: 'No changes' }, 400)
     update.updatedAt = new Date()
     // returnDocument: 'after' makes findOneAndUpdate return the updated document (MongoDB, [s.a.]a).
     // <https://www.mongodb.com/docs/drivers/node/current/crud/compound-operations/> [Accessed 4 October 2026].
     const doc = await getDb().collection<OpportunityDoc>('opportunities').findOneAndUpdate(
       { _id: c.req.valid('param').id },
-      { $set: update },
+      clearClosingDate ? { $set: update, $unset: { closingDate: '' } } : { $set: update },
       { returnDocument: 'after' },
     )
     if (!doc) return c.json({ error: 'Not found' }, 404)

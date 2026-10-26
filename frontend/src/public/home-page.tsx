@@ -1,4 +1,7 @@
+import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
+import { MediaCard, mediaCover } from './media-parts'
+import { homeNewsQuery } from './queries'
 import { HelpRows, LitemaBand, QuoteBand, SplitHero, VillageLine } from './sections'
 import aboutHero from './images/about-hero.webp'
 import heroElder from './images/hero-elder.webp'
@@ -28,6 +31,8 @@ export function HomePage() {
       </SplitHero>
 
       <LitemaBand />
+
+      <HomeNews />
 
       <section className="dark section">
         <div className="wrap">
@@ -90,5 +95,34 @@ export function HomePage() {
         </div>
       </section>
     </>
+  )
+}
+
+// Posts the desk marked "News page + Homepage". The section stays hidden until there is one.
+function HomeNews() {
+  const { data: items = [] } = useQuery(homeNewsQuery)
+  if (!items.length) return null
+  return (
+    <section className="section">
+      <div className="wrap">
+        <div className="section-head reveal" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 16, flexWrap: 'wrap' }}>
+          <h2 className="section-title">From the centre</h2>
+          <Link to="/media" className="text-link">All news</Link>
+        </div>
+        <div className="media-grid">
+          {items.map((item, index) => (
+            <MediaCard
+              key={item.id}
+              className="reveal"
+              title={item.title}
+              body={item.body}
+              date={item.updatedAt}
+              image={mediaCover(item, index)}
+              to={`/media/${item.id}`}
+            />
+          ))}
+        </div>
+      </div>
+    </section>
   )
 }

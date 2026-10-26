@@ -9,11 +9,11 @@ import { OpportunitiesPage } from './opportunities-page'
 
 export const adminLinks = [
   ['/desk', 'Desk'],
-  ['/desk/content', 'Content'],
-  ['/desk/library', 'Library'],
+  ['/desk/content', 'News posts'],
+  ['/desk/library', 'Categories'],
   ['/desk/opportunities', 'Opportunities'],
   ['/desk/applications', 'Applications'],
-  ['/desk/assign', 'Assign'],
+  ['/desk/assign', 'Assign work'],
   ['/desk/messages', 'Messages'],
 ] as const
 

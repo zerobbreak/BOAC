@@ -54,6 +54,11 @@ export const messagesQuery = queryOptions({
   queryFn: () => unwrap(client.admin.messages.$get()),
 })
 
+export const assignmentsQuery = queryOptions({
+  queryKey: ['admin', 'assignments'],
+  queryFn: async () => (await unwrap(client.admin.assignments.$get())).assignments,
+})
+
 export const volunteersQuery = queryOptions({
   queryKey: ['admin', 'volunteers'],
   queryFn: async () => {

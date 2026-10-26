@@ -5,8 +5,8 @@ import { WorkPage } from './work-page'
 
 export const volunteerLinks = [
   ['/desk', 'Schedule'],
-  ['/desk/work', 'Work'],
-  ['/desk/spaces', 'Spaces'],
+  ['/desk/work', 'My work'],
+  ['/desk/spaces', 'Places'],
 ] as const
 
 export function VolunteerRoutes() {
