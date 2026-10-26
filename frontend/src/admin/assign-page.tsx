@@ -2,9 +2,23 @@ import { useState, type FormEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { client, errorText, unwrap } from '../lib/api-client'
 import { volunteerKey } from '../volunteer/queries'
+import { comingUp, overdue, pastClosing } from './dates'
 import { assignmentsQuery, opportunitiesQuery, volunteersQuery } from './queries'
 
 const statusLabel = { planned: 'Planned', in_progress: 'In progress', done: 'Done' } as const
+
+// Overdue shifts started without being marked done; they get their own list so "Coming up" only shows what's ahead.
+const groups = [
+  { value: 'upcoming', label: 'Coming up', empty: 'Nothing coming up.' },
+  { value: 'overdue', label: 'Overdue', empty: 'Nothing overdue. Every shift that has started is marked done.' },
+  { value: 'done', label: 'Done', empty: 'No finished shifts yet.' },
+] as const
+type Group = (typeof groups)[number]['value']
+const inGroup: Record<Group, (item: { status: 'planned' | 'in_progress' | 'done'; startsAt: string | null }) => boolean> = {
+  upcoming: comingUp,
+  overdue,
+  done: (item) => item.status === 'done',
+}
 
 function shiftTime(value: string | null) {
   if (!value) return 'No start time'
@@ -19,7 +33,7 @@ export function AssignPage() {
   const [volunteerId, setVolunteerId] = useState('')
   const [opportunityId, setOpportunityId] = useState('')
   const [startsAt, setStartsAt] = useState('')
-  const [show, setShow] = useState<'upcoming' | 'done'>('upcoming')
+  const [show, setShow] = useState<Group>('upcoming')
 
   const assign = useMutation({
     mutationFn: () => unwrap(client.admin.assignments.$post({
@@ -29,20 +43,28 @@ export function AssignPage() {
         startsAt: startsAt ? new Date(startsAt).toISOString() : undefined,
       },
     })),
-    onSuccess: () => Promise.all([
-      queryClient.invalidateQueries({ queryKey: volunteerKey }),
-      queryClient.invalidateQueries({ queryKey: assignmentsQuery.queryKey }),
-    ]),
+    onSuccess: () => {
+      // Clear the form so a second click can't book the same shift again.
+      setVolunteerId('')
+      setOpportunityId('')
+      setStartsAt('')
+      return Promise.all([
+        queryClient.invalidateQueries({ queryKey: volunteerKey }),
+        queryClient.invalidateQueries({ queryKey: assignmentsQuery.queryKey }),
+      ])
+    },
   })
   const error = opportunities.error ?? volunteers.error ?? assignments.error ?? assign.error
 
   const all = assignments.data ?? []
-  const shown = all.filter((item) => (show === 'done' ? item.status === 'done' : item.status !== 'done'))
-  // Warn before booking someone twice at the same time.
+  const shown = all.filter(inGroup[show])
+  // Shifts have no end time, so warn when the volunteer already has unfinished work booked that day.
   const clash = startsAt && volunteerId
     ? all.find((item) => item.volunteerId === volunteerId && item.status !== 'done' && item.startsAt
-      && new Date(item.startsAt).getTime() === new Date(startsAt).getTime())
+      && new Date(item.startsAt).toDateString() === new Date(startsAt).toDateString())
     : undefined
+  // The closing date only ends applications, so those stay assignable but are labelled.
+  const assignable = (opportunities.data?.opportunities ?? []).filter((item) => item.status === 'open')
 
   function onAssign(event: FormEvent) {
     event.preventDefault()
@@ -78,8 +100,10 @@ export function AssignPage() {
             Opportunity
             <select value={opportunityId} onChange={(event) => setOpportunityId(event.target.value)} required>
               <option value="">Choose</option>
-              {(opportunities.data?.opportunities ?? []).filter((item) => item.status === 'open').map((item) => (
-                <option key={item.id} value={item.id}>{item.title}{item.location ? ` · ${item.location}` : ''}</option>
+              {assignable.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.title}{item.location ? ` · ${item.location}` : ''}{pastClosing(item) ? ' (applications closed)' : ''}
+                </option>
               ))}
             </select>
           </label>
@@ -90,7 +114,7 @@ export function AssignPage() {
         </div>
         {clash ? (
           <p className="notice" role="alert">
-            {clash.volunteerName} already has {clash.title} at {shiftTime(clash.startsAt)}. You can still assign this if it's meant to be.
+            {clash.volunteerName} already has {clash.title} on {shiftTime(clash.startsAt)}. You can still assign this if it's meant to be.
           </p>
         ) : null}
         <button type="submit" disabled={assign.isPending}>Assign</button>
@@ -99,12 +123,15 @@ export function AssignPage() {
       <div className="toolbar">
         <h2>Shifts</h2>
         <div className="filters" role="group" aria-label="Show">
-          <button type="button" aria-pressed={show === 'upcoming'} onClick={() => setShow('upcoming')}>Coming up</button>
-          <button type="button" aria-pressed={show === 'done'} onClick={() => setShow('done')}>Done</button>
+          {groups.map((group) => (
+            <button key={group.value} type="button" aria-pressed={show === group.value} onClick={() => setShow(group.value)}>
+              {group.label} {all.filter(inGroup[group.value]).length}
+            </button>
+          ))}
         </div>
       </div>
       {assignments.isPending ? <p className="muted">Loading…</p> : null}
-      {assignments.data && shown.length === 0 ? <p className="muted">{show === 'done' ? 'No finished shifts yet.' : 'Nothing assigned yet.'}</p> : null}
+      {assignments.data && shown.length === 0 ? <p className="muted">{all.length ? groups.find((group) => group.value === show)!.empty : 'Nothing assigned yet.'}</p> : null}
       {shown.length ? (
         <div className="table-box">
           <table>

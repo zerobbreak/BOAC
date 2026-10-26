@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { InferResponseType } from 'hono/client'
 import { client, errorText, unwrap } from '../lib/api-client'
 import { openOpportunitiesQuery } from '../public/queries'
+import { onVolunteerForm, pastClosing } from './dates'
 import { applicationsQuery, opportunitiesQuery } from './queries'
 
 type Opportunity = InferResponseType<typeof client.admin.opportunities.$get, 200>['opportunities'][number]
@@ -21,12 +22,6 @@ function toForm(item: Opportunity): Form {
 
 function dayLabel(value: string) {
   return new Date(value).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', timeZone: 'UTC' })
-}
-
-// The public list drops an opportunity the day after its closing date, even while it is still open here.
-function pastClosing(item: Opportunity) {
-  if (!item.closingDate) return false
-  return new Date(item.closingDate).toISOString().slice(0, 10) < new Date().toISOString().slice(0, 10)
 }
 
 export function OpportunitiesPage() {
@@ -103,7 +98,7 @@ export function OpportunitiesPage() {
         <div className="list">
           {shown.map((item) => {
             const count = applied(item.id)
-            const visible = item.status === 'open' && item.public && !pastClosing(item)
+            const visible = onVolunteerForm(item)
             return (
               <article className="card" key={item.id} style={editing === item.id ? { borderColor: 'var(--clay)' } : undefined}>
                 <div className="inbox-top">

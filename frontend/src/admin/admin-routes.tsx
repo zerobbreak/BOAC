@@ -3,14 +3,12 @@ import { ApplicationsPage } from './applications-page'
 import { AssignPage } from './assign-page'
 import { ContentPage } from './content-page'
 import { DeskPage } from './desk-page'
-import { LibraryPage } from './library-page'
 import { MessagesPage } from './messages-page'
 import { OpportunitiesPage } from './opportunities-page'
 
 export const adminLinks = [
   ['/desk', 'Desk'],
   ['/desk/content', 'News posts'],
-  ['/desk/library', 'Categories'],
   ['/desk/opportunities', 'Opportunities'],
   ['/desk/applications', 'Applications'],
   ['/desk/assign', 'Assign work'],
@@ -22,7 +20,8 @@ export function AdminRoutes() {
     <Routes>
       <Route index element={<DeskPage />} />
       <Route path="content" element={<ContentPage />} />
-      <Route path="library" element={<LibraryPage />} />
+      {/* Categories moved into News posts; old links and bookmarks open the panel there. */}
+      <Route path="library" element={<Navigate to="/desk/content?panel=categories" replace />} />
       <Route path="opportunities" element={<OpportunitiesPage />} />
       <Route path="applications" element={<ApplicationsPage />} />
       <Route path="assign" element={<AssignPage />} />

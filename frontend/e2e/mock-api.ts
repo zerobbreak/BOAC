@@ -59,8 +59,8 @@ function seed() {
       { id: "a-lerato", opportunityId: "o-kitchen", fullName: "Lerato Ndlovu", email: "lerato@example.com", phone: null, skills: "Teaching", availability: "Afternoons", motivation: "I'd like to read with the elders.", status: "under_review", internalNotes: "", files: [], reviewedBy: null, submittedAt: at(-4) },
     ],
     messages: [
-      { id: "m-naledi", name: "Naledi Khumalo", email: "naledi@example.com", phone: "082 555 0123", subject: "Visiting hours", message: "Can family join lunch on Fridays?", status: "new", createdAt: at(-1) },
-      { id: "m-pieter", name: "Pieter van Wyk", email: "pieter@example.com", phone: null, subject: "Donating blankets", message: "We have 40 blankets to give.", status: "handled", createdAt: at(-8) },
+      { id: "m-naledi", name: "Naledi Khumalo", email: "naledi@example.com", phone: "082 555 0123", subject: "general", message: "Can family join lunch on Fridays?", status: "new", createdAt: at(-1) },
+      { id: "m-pieter", name: "Pieter van Wyk", email: "pieter@example.com", phone: null, subject: "donation", message: "We have 40 blankets to give.", status: "handled", createdAt: at(-8) },
     ],
     assignments: [
       { id: "w-1", volunteerId: "u-anna", volunteerName: "Anna Botha", title: "Kitchen helper", status: "planned", opportunityId: "o-kitchen", location: "Main hall kitchen", startsAt: at(2, 8), hours: null },
@@ -97,7 +97,14 @@ const routes: [string, RegExp, Handler][] = [
     return [200, { redirect: false, token: "t", user: users[role] }];
   }],
   ["POST", /^\/api\/auth\/sign-out$/, ({ state }) => { state.signedIn = null; return [200, { success: true }]; }],
-  ["GET", /^\/api\/auth\/admin\/list-users$/, ({ state }) => [200, { users: state.volunteers, total: state.volunteers.length }]],
+  // Pages and filters like Better Auth's admin plugin, so the desk must ask for every page.
+  ["GET", /^\/api\/auth\/admin\/list-users$/, ({ state, query }) => {
+    const people = [users.admin, ...state.volunteers];
+    const matching = query.get("filterField") === "role" ? people.filter((person) => person.role === query.get("filterValue")) : people;
+    const offset = Number(query.get("offset") ?? 0);
+    const limit = Number(query.get("limit") ?? 100);
+    return [200, { users: matching.slice(offset, offset + limit), total: matching.length, limit, offset }];
+  }],
 
   // Public
   ["GET", /^\/content$/, ({ state, query }) => [200, {
@@ -133,6 +140,12 @@ const routes: [string, RegExp, Handler][] = [
     const category = { id: `cat-${state.categories.length + 1}`, name: String(body?.name) };
     state.categories.push(category);
     return [201, { category }];
+  }],
+  ["PATCH", /^\/admin\/categories\/([^/]+)$/, ({ state, body, params }) => {
+    const category = state.categories.find((entry) => entry.id === params[0]);
+    if (!category) return [404, { error: "Not found" }];
+    category.name = String(body?.name);
+    return [200, { category }];
   }],
   ["DELETE", /^\/admin\/categories\/([^/]+)$/, ({ state, params }) => {
     state.categories = state.categories.filter((entry) => entry.id !== params[0]);

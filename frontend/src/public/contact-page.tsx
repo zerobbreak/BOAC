@@ -2,19 +2,11 @@ import { useState, type FormEvent } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
 import { client, errorText, unwrap } from '../lib/api-client'
+import { contactSubjects, type ContactSubject } from './contact-subjects'
 import { LitemaBand } from './sections'
 
-const subjects = [
-  ['general', 'General question'],
-  ['volunteer', 'Volunteering'],
-  ['donation', 'Donations and sponsorship'],
-  ['partnership', 'Partnership'],
-] as const
-
-type Subject = (typeof subjects)[number][0]
-
-function subjectFrom(value: string | null): Subject {
-  return subjects.find(([key]) => key === value)?.[0] ?? 'general'
+function subjectFrom(value: string | null): ContactSubject {
+  return contactSubjects.find(([key]) => key === value)?.[0] ?? 'general'
 }
 
 export function ContactPage() {
@@ -95,7 +87,7 @@ export function ContactPage() {
                   <div className="form-group">
                     <label htmlFor="contact-subject">About</label>
                     <select id="contact-subject" className="input" value={form.subject} onChange={(event) => update('subject', subjectFrom(event.target.value))}>
-                      {subjects.map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+                      {contactSubjects.map(([key, label]) => <option key={key} value={key}>{label}</option>)}
                     </select>
                   </div>
                 </div>

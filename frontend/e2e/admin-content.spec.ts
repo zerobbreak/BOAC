@@ -80,3 +80,17 @@ test("a post whose category was removed saves as No category", async ({ page, ap
   await expect(page.getByRole("status")).toHaveText("Saved");
   expect(api.callsTo("PATCH", "/admin/content/c-news")[0].body).toMatchObject({ categoryId: null });
 });
+
+test("posts can be searched by title and text", async ({ page }) => {
+  await page.goto("/desk/content");
+  const list = page.locator(".content-list");
+
+  await page.getByRole("searchbox", { name: "Search posts" }).fill("garden growing");
+  await expect(list.getByRole("link")).toHaveCount(1);
+  await expect(list).toContainText("New garden beds");
+
+  await page.getByRole("searchbox", { name: "Search posts" }).fill("nothing like this");
+  await expect(page.getByText("No posts match “nothing like this”.")).toBeVisible();
+  await page.getByRole("button", { name: "Clear search" }).click();
+  await expect(list.getByRole("link")).toHaveCount(4);
+});

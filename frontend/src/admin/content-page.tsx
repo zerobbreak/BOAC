@@ -2,9 +2,11 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { InferResponseType } from 'hono/client'
 import { Link, useSearchParams } from 'react-router-dom'
-import { apiBlob, client, errorText, unwrap } from '../lib/api-client'
+import { client, errorText, unwrap } from '../lib/api-client'
 import { MediaArticle, MediaCard, fallbackImages, mediaDate } from '../public/media-parts'
+import { CategoriesPanel } from './categories-panel'
 import { categoriesQuery, contentQuery } from './queries'
+import { useCover } from './use-cover'
 import '../public/site.css'
 
 type ContentItem = InferResponseType<typeof client.admin.content.$get, 200>['content'][number]
@@ -14,19 +16,11 @@ type Placement = 'news' | 'home'
 // The homepage's "From the centre" section shows this many posts.
 const homeSlots = 3
 
+// The category dropdown's last option, which opens a field to make a new one.
+const addCategoryValue = '__new__'
+
 function whereLabel(placement: Placement) {
   return placement === 'home' ? 'News + Homepage' : 'News'
-}
-
-// Covers sit behind the admin API, so they are fetched with the session and shown as blob URLs.
-function useCover(item: Pick<ContentItem, 'id' | 'coverUrl' | 'updatedAt'> | null) {
-  const cover = useQuery({
-    queryKey: ['admin', 'cover', item?.id, item?.updatedAt],
-    queryFn: () => apiBlob(item!.coverUrl!),
-    enabled: Boolean(item?.coverUrl),
-    staleTime: Infinity,
-  })
-  return item?.coverUrl ? cover.data ?? null : null
 }
 
 // A preview URL for a file picked but not yet uploaded.
@@ -90,10 +84,20 @@ type ListProps = {
 
 function ContentList({ items, categoryName, error, isPending }: ListProps) {
   const queryClient = useQueryClient()
+  // In the URL, so the old Categories page can redirect straight to it.
+  const [params, setParams] = useSearchParams()
+  const showCategories = params.get('panel') === 'categories'
   const [filter, setFilter] = useState<Filter>('all')
   const [picked, setPicked] = useState<Set<string>>(new Set())
   const [confirming, setConfirming] = useState(false)
-  const shown = items.filter(filters[filter].keep)
+  const [search, setSearch] = useState('')
+  const words = search.toLowerCase().split(/\s+/).filter(Boolean)
+  // Every word must appear in the title or text, so "food drive" finds "Food drive this weekend".
+  const matches = (item: ContentItem) => {
+    const text = `${item.title} ${item.body}`.toLowerCase()
+    return words.every((word) => text.includes(word))
+  }
+  const shown = items.filter(filters[filter].keep).filter(matches)
   // Only drafts can be removed in bulk, so a slip cannot take live posts off the site.
   const drafts = shown.filter((item) => item.status === 'draft')
   const chosen = items.filter((item) => picked.has(item.id) && item.status === 'draft')
@@ -126,15 +130,27 @@ function ContentList({ items, categoryName, error, isPending }: ListProps) {
           <p className="eyebrow">Public site</p>
           <h1>News posts</h1>
         </div>
-        <Link to="?edit=new" className="button">New post</Link>
+        <div className="row">
+          <button type="button" className="ghost" aria-expanded={showCategories} onClick={() => setParams(showCategories ? {} : { panel: 'categories' })}>
+            Categories
+          </button>
+          <Link to="?edit=new" className="button">New post</Link>
+        </div>
       </div>
       <p className="muted page-intro">
         Every published post appears on the News page. Choose “News + Homepage” in a post to also feature it on the
         homepage, which shows the latest {homeSlots}. Drafts stay here until you publish them.
       </p>
+      {showCategories ? <CategoriesPanel onClose={() => setParams({})} /> : null}
       {error ? <p className="error">{errorText(error, 'Content could not be loaded')}</p> : null}
       {removeDrafts.error ? <p className="error">{errorText(removeDrafts.error, 'Some drafts could not be deleted')}</p> : null}
       {isPending ? <p className="muted">Loading…</p> : null}
+      {items.length ? (
+        <label className="search-field">
+          <span className="sr-only">Search posts</span>
+          <input type="search" placeholder="Search titles and text" value={search} onChange={(event) => setSearch(event.target.value)} />
+        </label>
+      ) : null}
       {items.length ? (
         <div className="toolbar">
           <div className="filters" role="group" aria-label="Show">
@@ -171,6 +187,12 @@ function ContentList({ items, categoryName, error, isPending }: ListProps) {
           <h2>Nothing posted yet</h2>
           <p className="muted">Write the first post for the News page.</p>
         </div>
+      ) : null}
+      {items.length && words.length && shown.length === 0 ? (
+        <p className="muted">
+          No {filter === 'all' ? '' : `${filters[filter].label.toLowerCase()} `}posts match “{search.trim()}”.{' '}
+          <button type="button" className="link-button" onClick={() => setSearch('')}>Clear search</button>
+        </p>
       ) : null}
       <ul className="content-list">
         {shown.map((item) => (
@@ -227,6 +249,8 @@ function ContentEditor({ item, categories, homeItems, onClose, onCreated }: Edit
   const [dropCover, setDropCover] = useState(false)
   const [view, setView] = useState<'home' | 'card' | 'article'>(saved.placement === 'home' ? 'home' : 'card')
   const [confirmDelete, setConfirmDelete] = useState(false)
+  // The name being typed for a category made from the dropdown; null while the dropdown is in use.
+  const [newCategory, setNewCategory] = useState<string | null>(null)
 
   const savedCover = useCover(item)
   const fileUrl = useFileUrl(file)
@@ -291,6 +315,16 @@ function ContentEditor({ item, categories, homeItems, onClose, onCreated }: Edit
       onClose()
     },
   })
+  const addCategory = useMutation({
+    mutationFn: (name: string) => unwrap(client.admin.categories.$post({ json: { name } })),
+    onSuccess: async ({ category }) => {
+      // Add it to the cached list first, so the select can pick it before the refetch lands.
+      queryClient.setQueryData(categoriesQuery.queryKey, (current = []) => [...current, category])
+      update('categoryId', category.id)
+      setNewCategory(null)
+      await queryClient.invalidateQueries({ queryKey: categoriesQuery.queryKey })
+    },
+  })
   const error = save.error ?? remove.error
   const busy = save.isPending || remove.isPending
 
@@ -349,14 +383,44 @@ function ContentEditor({ item, categories, homeItems, onClose, onCreated }: Edit
 
           <label>
             Category
-            <select value={categoryId} onChange={(event) => update('categoryId', event.target.value)}>
+            <select
+              value={newCategory === null ? categoryId : addCategoryValue}
+              onChange={(event) => {
+                if (event.target.value === addCategoryValue) setNewCategory('')
+                else {
+                  setNewCategory(null)
+                  update('categoryId', event.target.value)
+                }
+              }}
+            >
               <option value="">No category</option>
               {categories.map((entry) => <option key={entry.id} value={entry.id}>{entry.name}</option>)}
+              <option value={addCategoryValue}>+ New category…</option>
             </select>
-            <span className="hint">
-              Categories become the filter tabs on the News page. <Link to="/desk/library">Manage categories</Link>
-            </span>
+            <span className="hint">Categories become the filter tabs on the News page. Rename or remove them from Categories on the post list.</span>
           </label>
+          {newCategory !== null ? (
+            // Not a nested form: Enter here must add the category, not submit the post.
+            <div className="row new-category">
+              <input
+                value={newCategory}
+                onChange={(event) => setNewCategory(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key !== 'Enter') return
+                  event.preventDefault()
+                  if (newCategory.trim()) addCategory.mutate(newCategory.trim())
+                }}
+                placeholder="e.g. Events"
+                aria-label="New category name"
+                autoFocus
+              />
+              <button type="button" disabled={addCategory.isPending || !newCategory.trim()} onClick={() => addCategory.mutate(newCategory.trim())}>
+                Add category
+              </button>
+              <button type="button" className="ghost" onClick={() => setNewCategory(null)}>Cancel</button>
+              {addCategory.error ? <span className="error" role="alert">{errorText(addCategory.error, 'Could not add the category')}</span> : null}
+            </div>
+          ) : null}
 
           <label className="body-field">
             Text
