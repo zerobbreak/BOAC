@@ -1,6 +1,9 @@
+# Railway config for the backend (api) service.
+# Service settings: Root Directory = /backend. Railway reads this file from there.
 [build]
 builder = "RAILPACK"
 buildCommand = "npm run build"
+watchPatterns = ["/backend/**"]
 
 [deploy]
 startCommand = "npm start"

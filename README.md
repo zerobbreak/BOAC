@@ -32,7 +32,7 @@ For the full API route reference, auth model, and endpoint summary, see [backend
 - Frontend: React 19, Vite, React Router, TanStack Query, TypeScript
 - Backend: Hono, TypeScript, MongoDB, Better Auth, Zod
 - Storage: AWS S3-compatible bucket
-- Deployment notes: Railway and Docker are configured for backend/frontend hosting
+- Deployment: see [docs/railway-deploy.md](docs/railway-deploy.md) for the Railway setup (api + web services)
 
 ## Local development
 
