@@ -4,10 +4,10 @@ One Railway project, four pieces:
 
 | Service | Source | What it is |
 |---|---|---|
-| `api` | GitHub `zerobbreak/BOAC`, Root Directory `/backend` | Hono + Better Auth backend (Railpack, `npm run build` / `npm start`) |
+| `BOAC` (api) | GitHub `zerobbreak/BOAC`, Root Directory `/backend` | Hono + Better Auth backend (Railpack, `npm run build` / `npm start`) |
 | `web` | GitHub `zerobbreak/BOAC`, Root Directory `/` | React build served by Caddy (`frontend/Dockerfile`) |
 | `MongoDB` | Railway template | Database |
-| `boac-uploads` | Railway bucket | Image and file storage |
+| `arranged-larder` | Railway bucket | Image and file storage |
 
 The browser only talks to `web`. Caddy forwards `https://<web>/_api/*` to `api`, so the Better Auth session cookie
 belongs to the frontend's own domain. Third-party cookie blocking can't break sign-in this way.
@@ -25,11 +25,11 @@ Variables (`${{...}}` are Railway reference variables, so type them as-is):
 ```
 MONGO_URL=${{MongoDB.MONGO_URL}}
 MONGODB_DB=boac
-AWS_S3_BUCKET_NAME=${{boac-uploads.BUCKET}}
-AWS_ENDPOINT_URL=${{boac-uploads.ENDPOINT}}
-AWS_ACCESS_KEY_ID=${{boac-uploads.ACCESS_KEY_ID}}
-AWS_SECRET_ACCESS_KEY=${{boac-uploads.SECRET_ACCESS_KEY}}
-AWS_DEFAULT_REGION=${{boac-uploads.REGION}}
+AWS_S3_BUCKET_NAME=${{arranged-larder.BUCKET}}
+AWS_ENDPOINT_URL=${{arranged-larder.ENDPOINT}}
+AWS_ACCESS_KEY_ID=${{arranged-larder.ACCESS_KEY_ID}}
+AWS_SECRET_ACCESS_KEY=${{arranged-larder.SECRET_ACCESS_KEY}}
+AWS_DEFAULT_REGION=${{arranged-larder.REGION}}
 BETTER_AUTH_SECRET=<32+ random characters>
 BETTER_AUTH_URL=https://${{RAILWAY_PUBLIC_DOMAIN}}
 FRONTEND_ORIGIN=https://${{web.RAILWAY_PUBLIC_DOMAIN}}
@@ -49,15 +49,21 @@ Settings:
 
 - Source repo `zerobbreak/BOAC`, branch `main`
 - Root Directory: `/` (leave empty). The Dockerfile copies `backend/src` for the typed API client.
-- Config File Path: `/frontend/railway.toml` (sets the Dockerfile builder, `frontend/Dockerfile`)
+- Healthcheck Path: `/`
 - Networking: **Generate Domain**
+
+Railway no longer accepts a new Config File Path (it treats `railway.toml` as deprecated config-as-code), so
+`frontend/railway.toml` is only a record of the intended settings. The builder is picked through a variable instead.
 
 Variables:
 
 ```
+RAILWAY_DOCKERFILE_PATH=frontend/Dockerfile
 VITE_API_URL=/_api
-API_UPSTREAM=https://${{api.RAILWAY_PUBLIC_DOMAIN}}
+API_UPSTREAM=https://${{BOAC.RAILWAY_PUBLIC_DOMAIN}}
 ```
+
+On Windows Git Bash, run `railway variable set` with `MSYS_NO_PATHCONV=1`, or `/_api` gets rewritten into a Windows path.
 
 - `VITE_API_URL` is a build arg. It gets baked into the JS bundle, so changing it needs a redeploy.
 - `API_UPSTREAM` is read by Caddy at runtime. It has to be the full `https://` URL of `api`.

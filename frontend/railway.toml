@@ -1,6 +1,6 @@
 # Railway config for the frontend service.
 # Service settings: Root Directory = / (repo root, because the Dockerfile copies backend/src for the typed client)
-# and Config File Path = /frontend/railway.toml.
+# Railway no longer takes a Config File Path, so the live service uses RAILWAY_DOCKERFILE_PATH=frontend/Dockerfile instead.
 [build]
 builder = "DOCKERFILE"
 dockerfilePath = "frontend/Dockerfile"
