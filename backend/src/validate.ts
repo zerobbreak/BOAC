@@ -1,14 +1,15 @@
-import { zValidator } from '@hono/zod-validator'
 import type { ValidationTargets } from 'hono'
+import { validator } from 'hono-openapi'
 import { ObjectId } from 'mongodb'
 import { z } from 'zod'
 
-// Adapted from Hono ([s.a.]b): zValidator hook (result, c) that returns a custom error response.
+// Adapted from Hono ([s.a.]b): validator hook (result, c) that returns a custom error response.
 // <https://github.com/honojs/middleware/tree/main/packages/zod-validator> [Accessed 4 October 2026]. Full reference in README.md.
+// hono-openapi's validator checks the same way and also records the schema, so it shows up in the Swagger docs at '/'.
 // Every failed check answers { error: '<first message>' }, the shape the frontend already reads.
 export function validate<Target extends keyof ValidationTargets, T extends z.ZodType>(target: Target, schema: T) {
-  return zValidator(target, schema, (result, c) => {
-    if (!result.success) return c.json({ error: result.error.issues[0]?.message ?? 'Invalid request' }, 400)
+  return validator(target, schema, (result, c) => {
+    if (!result.success) return c.json({ error: result.error[0]?.message ?? 'Invalid request' }, 400)
   })
 }
 
@@ -21,7 +22,7 @@ export function objectId(message = 'Invalid id') {
 
 // A route id that is not an ObjectId cannot match anything, so it answers 404 like a missing record.
 export function param<T extends z.ZodType>(schema: T) {
-  return zValidator('param', schema, (result, c) => {
+  return validator('param', schema, (result, c) => {
     if (!result.success) return c.json({ error: 'Not found' }, 404)
   })
 }

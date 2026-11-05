@@ -3,6 +3,8 @@ import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { HTTPException } from 'hono/http-exception'
+import { swaggerUI } from '@hono/swagger-ui'
+import { openAPIRouteHandler } from 'hono-openapi'
 import { auth, ensureAdminUser, ensureVolunteerUser, frontendOrigin, requireAdmin, type AppEnv } from './auth.js'
 import { pingBucket } from './bucket.js'
 import { closeDatabase, pingDatabase } from './db.js'
@@ -34,9 +36,20 @@ app.onError((error, c) => {
   return c.json({ error: 'Internal server error' }, 500)
 })
 
-app.get('/', (c) => {
-  return c.text('Hello Hono!')
-})
+// Swagger UI on the main route, reading a spec generated from the registered routes and their validator schemas.
+// Adapted from Hono ([s.a.]c) and hono-openapi ([s.a.]): swaggerUI({ url }) plus openAPIRouteHandler(app, ...).
+// <https://github.com/honojs/middleware/tree/main/packages/swagger-ui> [Accessed 5 November 2026]. Full reference in README.md.
+app.get('/', swaggerUI({ url: '/openapi.json' }))
+app.get(
+  '/openapi.json',
+  openAPIRouteHandler(app, {
+    documentation: {
+      info: { title: 'INSY7315 API', version: '1.0.0', description: 'Sign in through /api/auth first; admin and volunteer routes use the session cookie.' },
+    },
+    includeEmptyPaths: true,
+    exclude: ['/', '/openapi.json', '/api/auth/*'],
+  }),
+)
 
 // Adapted from Better Auth ([s.a.]b): forwards the raw request to Better Auth (limited to POST and GET here).
 app.on(['POST', 'GET'], '/api/auth/*', (c) => auth.handler(c.req.raw))

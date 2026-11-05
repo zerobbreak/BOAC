@@ -12,10 +12,11 @@
     "@aws-sdk/client-s3": "^3.1140.0",
     "@better-auth/mongo-adapter": "^1.7.6",
     "@hono/node-server": "^2.1.1",
-    "@hono/zod-validator": "^0.9.1",
+    "@hono/swagger-ui": "^0.6.2",
     "better-auth": "^1.7.6",
     "dotenv": "^18.0.3",
     "hono": "^4.13.9",
+    "hono-openapi": "^1.5.0",
     "mongodb": "^7.6.0",
     "zod": "^4.6.5"
   },

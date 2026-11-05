@@ -138,7 +138,7 @@ All routes under `/volunteer/*` require an authenticated volunteer user.
 
 **Routes.** Each resource (applications, assignments, contact, content, opportunities, volunteer work) has its own Hono instance in its own file. `index.ts` mounts these with `app.route()`, and the chained result is exported as `AppType` for the frontend's typed client (Hono, [s.a.]a). Updates use `findOneAndUpdate` with `returnDocument: 'after'`, so the response contains the saved document (MongoDB, [s.a.]a). Unique and unique partial indexes block duplicate records, such as a second open application for the same opportunity. The application route turns that duplicate key error into a `409` (MongoDB, [s.a.]d).
 
-**Requests and files.** Request bodies, queries and route params are validated with Zod via `@hono/zod-validator`, whose hook turns a failed check into `{ error }` (Hono, [s.a.]b). Uploaded images are identified by their magic bytes, not by their file name (Wikipedia, 2026), and are stored with the AWS SDK's S3 commands (Amazon Web Services, [s.a.]a). The SDK's default checksums are switched to `WHEN_REQUIRED` because the S3-compatible bucket rejects them (Amazon Web Services, [s.a.]b). Tests mock the database and auth with `vi.hoisted` and `vi.mock` (Vitest, [s.a.]).
+**Requests and files.** Request bodies, queries and route params are validated with Zod via `hono-openapi`'s `validator`, whose hook turns a failed check into `{ error }` (Hono, [s.a.]b) and which also records each schema for the Swagger docs served at `/` (hono-openapi, [s.a.]; Hono, [s.a.]c). Uploaded images are identified by their magic bytes, not by their file name (Wikipedia, 2026), and are stored with the AWS SDK's S3 commands (Amazon Web Services, [s.a.]a). The SDK's default checksums are switched to `WHEN_REQUIRED` because the S3-compatible bucket rejects them (Amazon Web Services, [s.a.]b). Tests mock the database and auth with `vi.hoisted` and `vi.mock` (Vitest, [s.a.]).
 
 ## References
 
@@ -149,6 +149,8 @@ All routes under `/volunteer/*` require an authenticated volunteer user.
 - Better Auth, [s.a.]c. *MongoDB adapter*. [online] Available at: <https://www.better-auth.com/docs/adapters/mongo> [Accessed 4 October 2026].
 - Hono, [s.a.]a. *Best practices*. [online] Available at: <https://hono.dev/docs/guides/best-practices> [Accessed 4 October 2026].
 - Hono, [s.a.]b. *Zod validator middleware for Hono* [Source code] Available at: <https://github.com/honojs/middleware/tree/main/packages/zod-validator> [Accessed 4 October 2026].
+- Hono, [s.a.]c. *Swagger UI middleware and client component adapter for Hono* [Source code] Available at: <https://github.com/honojs/middleware/tree/main/packages/swagger-ui> [Accessed 5 November 2026].
+- hono-openapi, [s.a.]. *hono-openapi* [Source code] Available at: <https://github.com/rhinobase/hono-openapi> [Accessed 5 November 2026].
 - MongoDB, [s.a.]a. *Compound operations*. [online] Available at: <https://www.mongodb.com/docs/drivers/node/current/crud/compound-operations/> [Accessed 4 October 2026].
 - MongoDB, [s.a.]b. *Create a MongoClient*. [online] Available at: <https://www.mongodb.com/docs/drivers/node/current/connect/mongoclient/> [Accessed 4 October 2026].
 - MongoDB, [s.a.]c. *Specify JSON schema validation*. [online] Available at: <https://www.mongodb.com/docs/manual/core/schema-validation/specify-json-schema/> [Accessed 4 October 2026].
